@@ -1,0 +1,11 @@
+[package]
+name = "celerity"
+version = "0.1.0"
+authors = ["Brainium Studios LLC"]
+edition = "2018"
+
+[dependencies]
+gee = { git = "https://github.com/BrainiumLLC/gee" }
+log = "0.4.11"
+time-point = "0.1.1"
+
