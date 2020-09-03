@@ -1,7 +1,7 @@
 use crate::{Animation, BoundedAnimation, Output};
 use gee::en;
 use std::marker::PhantomData;
-use time_point::{Duration, TimePoint};
+use time_point::Duration;
 
 pub struct Chain<A, B, O, T>
 where
@@ -22,13 +22,12 @@ where
     O: Output<T>,
     T: en::Float,
 {
-    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O {
-        assert_start_lte_time!(Chain, start, time);
-        let inflection = self.a.end(start);
-        if time < inflection {
-            self.a.sample(start, time)
+    fn sample(&mut self, elapsed: Duration) -> O {
+        let inflection = self.a.duration();
+        if elapsed < inflection {
+            self.a.sample(elapsed)
         } else {
-            self.b.sample(inflection, time)
+            self.b.sample(elapsed - inflection)
         }
     }
 }

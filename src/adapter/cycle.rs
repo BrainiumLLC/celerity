@@ -1,7 +1,7 @@
 use crate::{Animation, BoundedAnimation, Output};
 use gee::en;
 use std::marker::PhantomData;
-use time_point::{Duration, TimePoint};
+use time_point::Duration;
 
 pub struct Cycle<A, O, T>
 where
@@ -19,11 +19,9 @@ where
     O: Output<T>,
     T: en::Float,
 {
-    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O {
-        assert_start_lte_time!(Cycle, start, time);
-        let progress = (time - start).as_secs_f64() % self.anim.duration().as_secs_f64();
-        self.anim
-            .sample(start, start + Duration::from_secs_f64(progress))
+    fn sample(&mut self, elapsed: Duration) -> O {
+        let progress = elapsed.as_secs_f64() % self.anim.duration().as_secs_f64();
+        self.anim.sample(Duration::from_secs_f64(progress))
     }
 }
 

@@ -1,7 +1,7 @@
-use crate::{Animation, BoundedAnimation, Output};
+use crate::{util::ZipMap as _, Animation, BoundedAnimation, Output};
 use gee::en;
 use std::marker::PhantomData;
-use time_point::{Duration, TimePoint};
+use time_point::Duration;
 
 pub struct Rev<A, O, T>
 where
@@ -19,12 +19,9 @@ where
     O: Output<T>,
     T: en::Float,
 {
-    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O {
-        assert_start_lte_time!(Rev, start, time);
-        let rev = self.end(start) - (time - start);
+    fn sample(&mut self, elapsed: Duration) -> O {
         self.anim
-            // TODO: this special-casing is probably bad
-            .sample(start, if rev >= start { rev } else { start })
+            .sample(self.duration().zip_map(elapsed, |a, b| a.saturating_sub(b)))
     }
 }
 

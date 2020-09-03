@@ -1,6 +1,6 @@
 use crate::{ease::eased_lerp, Animation, BoundedAnimation, Output};
 use gee::en;
-use time_point::{Duration, TimePoint};
+use time_point::Duration;
 
 #[derive(Clone, Debug)]
 pub struct Keyframe<O: Output<T>, T: en::Float> {
@@ -22,36 +22,41 @@ impl<O: Output<T>, T: en::Float> Keyframe<O, T> {
 #[derive(Clone, Debug)]
 pub struct Path<O: Output<T>, T: en::Float> {
     initial: O,
-    duration: Duration,
-    keyframes: Vec<Keyframe<O, T>>,
+    keyframes: Vec<(Keyframe<O, T>, Duration)>,
 }
 
 impl<O: Output<T>, T: en::Float> Animation<O, T> for Path<O, T> {
-    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O {
-        assert_start_lte_time!(Path, start, time);
-        let a = self
+    fn sample(&mut self, elapsed: Duration) -> O {
+        let (a_value, a_abs_offset) = self
             .keyframes
             .iter()
-            .find_map(|kf| Some((start + kf.offset, kf.value)).filter(|(t, _)| *t <= time))
-            .unwrap_or_else(|| (start, self.initial));
+            .find(|(_, abs_offset)| *abs_offset <= elapsed)
+            .map(|(kf, abs_offset)| (kf.value, *abs_offset))
+            .unwrap_or_else(|| (self.initial, Duration::zero()));
         let b = self
             .keyframes
             .iter()
-            .find_map(|kf| Some((start + kf.offset, kf)).filter(|(t, _)| *t > time));
-        if let Some((bt, b)) = b {
-            let f = 1.0 - (bt - time).as_secs_f64() / (bt - a.0).as_secs_f64();
+            .find(|(_, abs_offset)| *abs_offset > elapsed)
+            .cloned();
+        if let Some((b_kf, b_abs_offset)) = b {
+            let f = 1.0
+                - (b_abs_offset - elapsed).as_secs_f64()
+                    / (b_abs_offset - a_abs_offset).as_secs_f64();
             debug_assert!(f >= 0.0, "f was {}, but must not be less than 0.0", f);
             debug_assert!(f <= 1.0, "f was {}, but must not be greater than 1.0", f);
-            eased_lerp(a.1, b.value, en::cast(f), b.easing)
+            eased_lerp(a_value, b_kf.value, en::cast(f), b_kf.easing)
         } else {
-            a.1
+            a_value
         }
     }
 }
 
 impl<O: Output<T>, T: en::Float> BoundedAnimation<O, T> for Path<O, T> {
     fn duration(&self) -> Duration {
-        self.duration
+        self.keyframes
+            .last()
+            .map(|(_, duration)| *duration)
+            .unwrap_or_default()
     }
 }
 
@@ -59,7 +64,6 @@ impl<O: Output<T>, T: en::Float> Path<O, T> {
     pub fn new(initial: O) -> Self {
         Self {
             initial,
-            duration: Default::default(),
             keyframes: Default::default(),
         }
     }
@@ -83,8 +87,8 @@ impl<O: Output<T>, T: en::Float> Path<O, T> {
     }
 
     pub fn add_keyframe(&mut self, keyframe: Keyframe<O, T>) -> &mut Self {
-        self.duration += keyframe.offset;
-        self.keyframes.push(keyframe);
+        let abs_offset = self.duration() + keyframe.offset;
+        self.keyframes.push((keyframe, abs_offset));
         self
     }
 

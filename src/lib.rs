@@ -1,17 +1,17 @@
-#[macro_use]
-mod util;
 mod adapter;
 pub mod ease;
 mod lerp;
 mod path;
+mod util;
 
 pub use self::{adapter::*, lerp::*, path::*};
 
+use crate::util::Map as _;
 use gee::en;
 use time_point::{Duration, TimePoint};
 
 pub trait Animation<O: Output<T>, T: en::Float> {
-    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O;
+    fn sample(&mut self, elapsed: Duration) -> O;
 
     fn cutoff(self, duration: Duration) -> Cutoff<Self, O, T>
     where
@@ -44,11 +44,12 @@ pub trait BoundedAnimation<O: Output<T>, T: en::Float>: Animation<O, T> {
         Cycle::new(self)
     }
 
-    fn repeat(self, times: usize) -> Cutoff<Cycle<Self, O, T>, O, T>
+    fn repeat(self, times: u32) -> Cutoff<Cycle<Self, O, T>, O, T>
     where
         Self: Sized,
     {
-        let duration = util::multiply_duration(self.duration(), times);
+        let times: i64 = en::cast(times);
+        let duration = self.duration().map(|nanos| nanos * times);
         Cutoff::new(Cycle::new(self), duration)
     }
 
@@ -69,11 +70,11 @@ pub trait BoundedAnimation<O: Output<T>, T: en::Float>: Animation<O, T> {
 
 impl<F, O, T> Animation<O, T> for F
 where
-    F: Fn(TimePoint, TimePoint) -> O,
+    F: Fn(Duration) -> O,
     O: Output<T>,
     T: en::Float,
 {
-    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O {
-        (*self)(start, time)
+    fn sample(&mut self, elapsed: Duration) -> O {
+        (*self)(elapsed)
     }
 }
