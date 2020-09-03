@@ -11,7 +11,7 @@ use gee::en;
 use time_point::{Duration, TimePoint};
 
 pub trait Animation<O: Output<T>, T: en::Float> {
-    fn sample(&self, start: TimePoint, time: TimePoint) -> O;
+    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O;
 
     fn cutoff(self, duration: Duration) -> Cutoff<Self, O, T>
     where
@@ -73,7 +73,7 @@ where
     O: Output<T>,
     T: en::Float,
 {
-    fn sample(&self, start: TimePoint, time: TimePoint) -> O {
+    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O {
         (*self)(start, time)
     }
 }

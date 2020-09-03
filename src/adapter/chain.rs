@@ -22,7 +22,7 @@ where
     O: Output<T>,
     T: en::Float,
 {
-    fn sample(&self, start: TimePoint, time: TimePoint) -> O {
+    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O {
         assert_start_lte_time!(Chain, start, time);
         let inflection = self.a.end(start);
         if time < inflection {

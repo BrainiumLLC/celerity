@@ -27,7 +27,7 @@ pub struct Path<O: Output<T>, T: en::Float> {
 }
 
 impl<O: Output<T>, T: en::Float> Animation<O, T> for Path<O, T> {
-    fn sample(&self, start: TimePoint, time: TimePoint) -> O {
+    fn sample(&mut self, start: TimePoint, time: TimePoint) -> O {
         assert_start_lte_time!(Path, start, time);
         let a = self
             .keyframes
