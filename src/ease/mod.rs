@@ -1,22 +1,19 @@
+use crate::Output;
 use gee::en;
 
-pub fn lerp<T: en::Float>(a: T, b: T, f: T) -> T {
-    a + (b - a) * f
+pub fn eased_lerp<O, T>(a: O, b: O, f: T, easing_fn: impl EasingFn<T>) -> O
+where
+    O: Output<T>,
+    T: en::Num,
+{
+    a.lerp(b, easing_fn.ease(f))
 }
 
-pub fn eased_lerp<T: en::Float>(a: T, b: T, f: T, easing_fn: impl EasingFn<T>) -> T {
-    easing_fn.lerp(a, b, f)
-}
-
-pub trait EasingFn<T: en::Float>: Copy {
+pub trait EasingFn<T: en::Num>: Copy {
     fn ease(&self, f: T) -> T;
-
-    fn lerp(&self, a: T, b: T, f: T) -> T {
-        lerp(a, b, self.ease(f))
-    }
 }
 
-impl<T: en::Float, F: Copy + Fn(T) -> T> EasingFn<T> for F {
+impl<T: en::Num, F: Copy + Fn(T) -> T> EasingFn<T> for F {
     fn ease(&self, f: T) -> T {
         (*self)(f)
     }

@@ -1,4 +1,4 @@
-use crate::{Animation, BoundedAnimation, Output};
+use crate::{ease::eased_lerp, Animation, BoundedAnimation, Output};
 use gee::en;
 use time_point::{Duration, TimePoint};
 
@@ -42,7 +42,7 @@ impl<O: Output<T>, T: en::Float> Animation<O, T> for Path<O, T> {
             let f = 1.0 - (bt - time).as_secs_f64() / (bt - a.0).as_secs_f64();
             debug_assert!(f >= 0.0, "f was {}, but must not be less than 0.0", f);
             debug_assert!(f <= 1.0, "f was {}, but must not be greater than 1.0", f);
-            a.1.eased_lerp(b.value, en::cast(f), b.easing)
+            eased_lerp(a.1, b.value, en::cast(f), b.easing)
         } else {
             a.1
         }
