@@ -2,10 +2,10 @@
 mod util;
 mod adapter;
 pub mod ease;
-mod output;
+mod lerp;
 mod path;
 
-pub use self::{adapter::*, output::*, path::*};
+pub use self::{adapter::*, lerp::*, path::*};
 
 use gee::en;
 use time_point::{Duration, TimePoint};
