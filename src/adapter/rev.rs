@@ -20,8 +20,10 @@ where
     T: en::Float,
 {
     fn sample(&mut self, elapsed: Duration) -> O {
-        self.anim
-            .sample(self.duration().zip_map(elapsed, |a, b| a.saturating_sub(b)))
+        self.anim.sample(
+            self.duration()
+                .zip_map(elapsed, |dur, el| std::cmp::max(dur - el, 0)),
+        )
     }
 }
 
