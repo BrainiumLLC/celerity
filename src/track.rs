@@ -20,12 +20,12 @@ impl<O: Output<T>, T: en::Float> Keyframe<O, T> {
 }
 
 #[derive(Clone, Debug)]
-pub struct Path<O: Output<T>, T: en::Float> {
+pub struct Track<O: Output<T>, T: en::Float> {
     initial: O,
     keyframes: Vec<(Keyframe<O, T>, Duration)>,
 }
 
-impl<O: Output<T>, T: en::Float> Animation<O, T> for Path<O, T> {
+impl<O: Output<T>, T: en::Float> Animation<O, T> for Track<O, T> {
     fn sample(&mut self, elapsed: Duration) -> O {
         let (a_value, a_abs_offset) = self
             .keyframes
@@ -51,7 +51,7 @@ impl<O: Output<T>, T: en::Float> Animation<O, T> for Path<O, T> {
     }
 }
 
-impl<O: Output<T>, T: en::Float> BoundedAnimation<O, T> for Path<O, T> {
+impl<O: Output<T>, T: en::Float> BoundedAnimation<O, T> for Track<O, T> {
     fn duration(&self) -> Duration {
         self.keyframes
             .last()
@@ -60,7 +60,7 @@ impl<O: Output<T>, T: en::Float> BoundedAnimation<O, T> for Path<O, T> {
     }
 }
 
-impl<O: Output<T>, T: en::Float> Path<O, T> {
+impl<O: Output<T>, T: en::Float> Track<O, T> {
     pub fn new(initial: O) -> Self {
         Self {
             initial,
