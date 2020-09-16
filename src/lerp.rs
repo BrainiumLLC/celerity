@@ -10,7 +10,8 @@ where
     T: en::Num,
 {
     fn lerp(self, other: Self, f: T) -> Self {
-        self + (other - self) * f
+        // This uses 2 multiplications to be numerically stable! Woo!
+        self * (T::one() - f) + other * f
     }
 }
 
