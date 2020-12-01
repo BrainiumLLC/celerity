@@ -1,10 +1,10 @@
-mod adapter;
+mod combinator;
 pub mod ease;
 mod lerp;
 mod track;
 mod util;
 
-pub use self::{adapter::*, lerp::*, track::*};
+pub use self::{combinator::*, lerp::*, track::*};
 
 use crate::util::Map as _;
 use gee::en;
