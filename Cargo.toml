@@ -3,6 +3,11 @@ name = "celerity"
 version = "0.1.0"
 authors = ["Brainium Studios LLC"]
 edition = "2018"
+description = "Buttery smooth animation toolkit"
+documentation = "https://docs.rs/celerity"
+repository = "https://github.com/BrainiumLLC/celerity"
+readme = "README.md"
+license = "Apache-2.0/MIT"
 
 [dependencies]
 gee = { git = "https://github.com/BrainiumLLC/gee" }

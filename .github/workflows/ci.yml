@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - "**.rs"
+      - "**.toml"
+      - ".github/workflows/ci.yml"
+  push:
+    branches: [master]
+    paths:
+      - "**.rs"
+      - "**.toml"
+      - ".github/workflows/ci.yml"
+
+jobs:
+  Check_Formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+          components: rustfmt
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
+
+  Tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        rust_version: [stable, beta, nightly]
+        platform:
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest }
+          - { target: aarch64-linux-android, os: ubuntu-latest, cmd: "apk --" }
+          - { target: x86_64-apple-darwin, os: macos-latest }
+          - { target: aarch64-apple-ios, os: macos-latest }
+
+    env:
+      RUST_BACKTRACE: 1
+      CARGO_INCREMENTAL: 0
+      RUSTFLAGS: "-C debuginfo=0"
+      FEATURES: "serde"
+      CMD: ${{ matrix.platform.cmd }}
+
+    runs-on: ${{ matrix.platform.os }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: ${{ matrix.rust_version }}${{ matrix.platform.host }}
+          targets: ${{ matrix.platform.target }}
+
+      - name: Install cargo-apk
+        if: contains(matrix.platform.target, 'android')
+        run: cargo install cargo-apk
+
+      - name: Check documentation
+        shell: bash
+        run: cargo doc --no-deps --target ${{ matrix.platform.target }} --features $FEATURES
+
+      - name: Build
+        shell: bash
+        run: cargo $CMD build --verbose --target ${{ matrix.platform.target }} --features $FEATURES
+
+      - name: Build tests
+        shell: bash
+        run: cargo $CMD test --no-run --verbose --target ${{ matrix.platform.target }} --features $FEATURES
+
+      - name: Run tests
+        shell: bash
+        if: (
+          !contains(matrix.platform.target, 'android') &&
+          !contains(matrix.platform.target, 'ios'))
+        run: cargo test --verbose --target ${{ matrix.platform.target }} --features $FEATURES
