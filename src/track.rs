@@ -30,7 +30,8 @@ impl<O: Output<T>, T: en::Float> Animation<O, T> for Track<O, T> {
         let (a_value, a_abs_offset) = self
             .keyframes
             .iter()
-            .find(|(_, abs_offset)| *abs_offset <= elapsed)
+            .filter(|(_, abs_offset)| *abs_offset <= elapsed)
+            .last()
             .map(|(kf, abs_offset)| (kf.value, *abs_offset))
             .unwrap_or_else(|| (self.initial, Duration::zero()));
         let b = self
