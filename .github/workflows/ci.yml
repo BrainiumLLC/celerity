@@ -41,7 +41,6 @@ jobs:
       RUST_BACKTRACE: 1
       CARGO_INCREMENTAL: 0
       RUSTFLAGS: "-C debuginfo=0"
-      FEATURES: "serde"
       CMD: ${{ matrix.platform.cmd }}
 
     runs-on: ${{ matrix.platform.os }}
@@ -59,19 +58,19 @@ jobs:
 
       - name: Check documentation
         shell: bash
-        run: cargo doc --no-deps --target ${{ matrix.platform.target }} --features $FEATURES
+        run: cargo doc --no-deps --target ${{ matrix.platform.target }}
 
       - name: Build
         shell: bash
-        run: cargo $CMD build --verbose --target ${{ matrix.platform.target }} --features $FEATURES
+        run: cargo $CMD build --verbose --target ${{ matrix.platform.target }}
 
       - name: Build tests
         shell: bash
-        run: cargo $CMD test --no-run --verbose --target ${{ matrix.platform.target }} --features $FEATURES
+        run: cargo $CMD test --no-run --verbose --target ${{ matrix.platform.target }}
 
       - name: Run tests
         shell: bash
         if: (
           !contains(matrix.platform.target, 'android') &&
           !contains(matrix.platform.target, 'ios'))
-        run: cargo test --verbose --target ${{ matrix.platform.target }} --features $FEATURES
+        run: cargo test --verbose --target ${{ matrix.platform.target }}
