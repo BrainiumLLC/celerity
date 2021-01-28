@@ -1,28 +1,28 @@
-use crate::{Animation, BoundedAnimation, Output};
+use crate::{Animatable, Animation, BoundedAnimation};
 use gee::en;
 use std::marker::PhantomData;
 use time_point::Duration;
 
-pub struct Chain<A, B, O, T>
+pub struct Chain<A, B, V, T>
 where
-    A: BoundedAnimation<O, T>,
-    B: Animation<O, T>,
-    O: Output<T>,
+    A: BoundedAnimation<V, T>,
+    B: Animation<V, T>,
+    V: Animatable<T>,
     T: en::Float,
 {
     a: A,
     b: B,
-    _marker: PhantomData<(O, T)>,
+    _marker: PhantomData<(V, T)>,
 }
 
-impl<A, B, O, T> Animation<O, T> for Chain<A, B, O, T>
+impl<A, B, V, T> Animation<V, T> for Chain<A, B, V, T>
 where
-    A: BoundedAnimation<O, T>,
-    B: Animation<O, T>,
-    O: Output<T>,
+    A: BoundedAnimation<V, T>,
+    B: Animation<V, T>,
+    V: Animatable<T>,
     T: en::Float,
 {
-    fn sample(&mut self, elapsed: Duration) -> O {
+    fn sample(&self, elapsed: Duration) -> V {
         let inflection = self.a.duration();
         if elapsed < inflection {
             self.a.sample(elapsed)
@@ -32,11 +32,11 @@ where
     }
 }
 
-impl<A, B, O, T> BoundedAnimation<O, T> for Chain<A, B, O, T>
+impl<A, B, V, T> BoundedAnimation<V, T> for Chain<A, B, V, T>
 where
-    A: BoundedAnimation<O, T>,
-    B: BoundedAnimation<O, T>,
-    O: Output<T>,
+    A: BoundedAnimation<V, T>,
+    B: BoundedAnimation<V, T>,
+    V: Animatable<T>,
     T: en::Float,
 {
     fn duration(&self) -> Duration {
@@ -44,11 +44,11 @@ where
     }
 }
 
-impl<A, B, O, T> Chain<A, B, O, T>
+impl<A, B, V, T> Chain<A, B, V, T>
 where
-    A: BoundedAnimation<O, T>,
-    B: Animation<O, T>,
-    O: Output<T>,
+    A: BoundedAnimation<V, T>,
+    B: Animation<V, T>,
+    V: Animatable<T>,
     T: en::Float,
 {
     pub fn new(a: A, b: B) -> Self {

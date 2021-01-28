@@ -1,10 +1,10 @@
-use crate::Output;
+use crate::Animatable;
 use gee::en;
 
-pub fn eased_lerp<O, T>(a: O, b: O, f: T, easing_fn: impl EasingFn<T>) -> O
+pub fn eased_lerp<V, T>(a: V, b: V, f: T, easing_fn: impl EasingFn<T>) -> V
 where
-    O: Output<T>,
-    T: en::Num,
+    V: Animatable<T>,
+    T: en::Float,
 {
     a.lerp(b, easing_fn.ease(f))
 }
@@ -35,3 +35,16 @@ pub fn slow_start<T: en::Float>(f: T) -> T {
         T::two() * f - T::one()
     }
 }
+
+pub fn sine_ease_in<T: en::Float>(f: T) -> T {
+    T::one() - T::cos((f * T::PI()) / T::two())
+}
+
+pub fn sine_ease_out<T: en::Float>(f: T) -> T {
+    T::sin((f * T::PI()) / T::two())
+}
+
+pub fn sine_ease_in_out<T: en::Float>(f: T) -> T {
+    -(T::cos(T::PI() * f) - T::one()) / T::two()
+}
+

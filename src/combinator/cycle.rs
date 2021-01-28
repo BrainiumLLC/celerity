@@ -1,34 +1,34 @@
-use crate::{Animation, BoundedAnimation, Output};
+use crate::{Animatable, Animation, BoundedAnimation};
 use gee::en;
 use std::marker::PhantomData;
 use time_point::Duration;
 
-pub struct Cycle<A, O, T>
+pub struct Cycle<A, V, T>
 where
-    A: BoundedAnimation<O, T>,
-    O: Output<T>,
+    A: BoundedAnimation<V, T>,
+    V: Animatable<T>,
     T: en::Float,
 {
     anim: A,
-    _marker: PhantomData<(O, T)>,
+    _marker: PhantomData<(V, T)>,
 }
 
-impl<A, O, T> Animation<O, T> for Cycle<A, O, T>
+impl<A, V, T> Animation<V, T> for Cycle<A, V, T>
 where
-    A: BoundedAnimation<O, T>,
-    O: Output<T>,
+    A: BoundedAnimation<V, T>,
+    V: Animatable<T>,
     T: en::Float,
 {
-    fn sample(&mut self, elapsed: Duration) -> O {
+    fn sample(&self, elapsed: Duration) -> V {
         let progress = elapsed.as_secs_f64() % self.anim.duration().as_secs_f64();
         self.anim.sample(Duration::from_secs_f64(progress))
     }
 }
 
-impl<A, O, T> Cycle<A, O, T>
+impl<A, V, T> Cycle<A, V, T>
 where
-    A: BoundedAnimation<O, T>,
-    O: Output<T>,
+    A: BoundedAnimation<V, T>,
+    V: Animatable<T>,
     T: en::Float,
 {
     pub fn new(anim: A) -> Self {

@@ -1,7 +1,9 @@
-mod combinator;
+pub mod catmullrom;
+pub mod combinator;
+mod coordinate;
 pub mod ease;
 mod lerp;
-mod track;
+pub mod track;
 mod util;
 
 pub use self::{combinator::*, lerp::*, track::*};
@@ -10,10 +12,10 @@ use crate::util::Map as _;
 use gee::en;
 use time_point::{Duration, TimePoint};
 
-pub trait Animation<O: Output<T>, T: en::Float> {
-    fn sample(&mut self, elapsed: Duration) -> O;
+pub trait Animation<V: Animatable<T>, T: en::Float> {
+    fn sample(&self, elapsed: Duration) -> V;
 
-    fn cutoff(self, duration: Duration) -> Cutoff<Self, O, T>
+    fn cutoff(self, duration: Duration) -> Cutoff<Self, V, T>
     where
         Self: Sized,
     {
@@ -21,7 +23,7 @@ pub trait Animation<O: Output<T>, T: en::Float> {
     }
 }
 
-pub trait BoundedAnimation<O: Output<T>, T: en::Float>: Animation<O, T> {
+pub trait BoundedAnimation<V: Animatable<T>, T: en::Float>: Animation<V, T> {
     fn duration(&self) -> Duration;
 
     /// The last time that this animation needs to be sampled at.
@@ -29,38 +31,38 @@ pub trait BoundedAnimation<O: Output<T>, T: en::Float>: Animation<O, T> {
         start + self.duration()
     }
 
-    fn chain<B>(self, other: B) -> Chain<Self, B, O, T>
+    fn chain<B>(self, other: B) -> Chain<Self, B, V, T>
     where
         Self: Sized,
-        B: Animation<O, T>,
+        B: Animation<V, T>,
     {
         Chain::new(self, other)
     }
 
-    fn cycle(self) -> Cycle<Self, O, T>
+    fn cycle(self) -> Cycle<Self, V, T>
     where
         Self: Sized,
     {
         Cycle::new(self)
     }
 
-    fn repeat(self, times: u32) -> Cutoff<Cycle<Self, O, T>, O, T>
+    fn repeat(self, times: u32) -> Cutoff<Cycle<Self, V, T>, V, T>
     where
         Self: Sized,
     {
         let times: i64 = en::cast(times);
-        let duration = self.duration().map(|nanos| nanos * times);
+        let duration = Duration::new(self.duration().nanos * times);
         Cutoff::new(Cycle::new(self), duration)
     }
 
-    fn mirror(self) -> Chain<Self, Rev<Self, O, T>, O, T>
+    fn mirror(self) -> Chain<Self, Rev<Self, V, T>, V, T>
     where
         Self: Clone + Sized,
     {
         self.clone().chain(self.rev())
     }
 
-    fn rev(self) -> Rev<Self, O, T>
+    fn rev(self) -> Rev<Self, V, T>
     where
         Self: Sized,
     {
@@ -68,13 +70,13 @@ pub trait BoundedAnimation<O: Output<T>, T: en::Float>: Animation<O, T> {
     }
 }
 
-impl<F, O, T> Animation<O, T> for F
+impl<F, V, T> Animation<V, T> for F
 where
-    F: Fn(Duration) -> O,
-    O: Output<T>,
+    F: Fn(Duration) -> V,
+    V: Animatable<T>,
     T: en::Float,
 {
-    fn sample(&mut self, elapsed: Duration) -> O {
+    fn sample(&self, elapsed: Duration) -> V {
         (*self)(elapsed)
     }
 }
