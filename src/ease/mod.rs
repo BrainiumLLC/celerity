@@ -1,3 +1,5 @@
+mod bezier;
+
 use crate::Animatable;
 use gee::en;
 
@@ -47,4 +49,3 @@ pub fn sine_ease_out<T: en::Float>(f: T) -> T {
 pub fn sine_ease_in_out<T: en::Float>(f: T) -> T {
     -(T::cos(T::PI() * f) - T::one()) / T::two()
 }
-

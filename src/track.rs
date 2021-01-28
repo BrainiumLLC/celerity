@@ -154,7 +154,6 @@ impl<V: Animatable<T> + en::Num, T: en::Float> Track<V, T> {
 
             let f2 = self.next_upcoming_frame(&elapsed).unwrap();
 
-            
             let f3 = if upcoming_frame_count > 1 {
                 self.second_next_upcoming_frame(&elapsed).unwrap()
             } else {
