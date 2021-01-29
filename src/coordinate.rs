@@ -28,6 +28,14 @@ impl<X: en::Num, Y: en::Num> std::ops::Add for Coordinate<X, Y> {
     }
 }
 
+impl<X: en::Num, Y: en::Num> std::ops::Sub for Coordinate<X, Y> {
+    type Output = Coordinate<X, Y>;
+
+    fn sub(self, rhs: Self) -> Self {
+        Self::new(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+
 impl<X: en::Num, Y: en::Num> std::ops::Mul<f64> for Coordinate<X, Y> {
     type Output = Coordinate<X, Y>;
 
