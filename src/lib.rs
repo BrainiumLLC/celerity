@@ -6,6 +6,8 @@ mod lerp;
 pub mod track;
 mod util;
 
+use std::fmt::Debug;
+
 pub use self::{combinator::*, lerp::*, track::*};
 
 use crate::util::Map as _;
@@ -20,6 +22,12 @@ pub trait Animation<V: Animatable<T>, T: en::Float> {
         Self: Sized,
     {
         Cutoff::new(self, duration)
+    }
+}
+
+impl<V: Animatable<T>, T: en::Float> Debug for dyn Animation<V, T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Animation") // TODO: Include something meaningful?
     }
 }
 

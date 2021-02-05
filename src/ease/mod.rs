@@ -1,4 +1,4 @@
-mod bezier;
+pub(crate) mod bezier;
 
 use crate::Animatable;
 use gee::en;

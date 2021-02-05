@@ -163,6 +163,36 @@ pub fn t_values<X: en::Num, Y: en::Num>(
     (0.0, t1, t2, t3)
 }
 
+// Calculate values of T, ignoring Y dimension
+pub fn t_values_x<X: en::Num, Y: en::Num>(
+    p0: &Coordinate<X, Y>,
+    p1: &Coordinate<X, Y>,
+    p2: &Coordinate<X, Y>,
+    p3: &Coordinate<X, Y>,
+    alpha: f64,
+) -> (f64, f64, f64, f64) {
+    let t1 = f64::powf(en::cast::<f64, _>(p1.x - p0.x).abs(), alpha);
+    let t2 = f64::powf(en::cast::<f64, _>(p2.x - p1.x).abs(), alpha) + t1;
+    let t3 = f64::powf(en::cast::<f64, _>(p3.x - p2.x).abs(), alpha) + t2;
+
+    (0.0, t1, t2, t3)
+}
+
+// Calculate values of T, ignoring X dimension
+pub fn t_values_y<X: en::Num, Y: en::Num>(
+    p0: &Coordinate<X, Y>,
+    p1: &Coordinate<X, Y>,
+    p2: &Coordinate<X, Y>,
+    p3: &Coordinate<X, Y>,
+    alpha: f64,
+) -> (f64, f64, f64, f64) {
+    let t1 = f64::powf(en::cast::<f64, _>(p1.y - p0.y).abs(), alpha);
+    let t2 = f64::powf(en::cast::<f64, _>(p2.y - p1.y).abs(), alpha) + t1;
+    let t3 = f64::powf(en::cast::<f64, _>(p3.y - p2.y).abs(), alpha) + t2;
+
+    (0.0, t1, t2, t3)
+}
+
 pub fn centripetal_catmull_rom<X: en::Num, Y: en::Num>(
     p0: Coordinate<X, Y>,
     p1: Coordinate<X, Y>,
@@ -233,11 +263,6 @@ mod tests {
         let b3 = bezier.2;
         let b4 = bezier.3;
 
-        println!("b1 = {}, {}", b1.x, b1.y);
-        println!("b2 = {}, {}", b2.x, b2.y);
-        println!("b3 = {}, {}", b3.x, b3.y);
-        println!("b4 = {}, {}", b4.x, b4.y);
-
         for i in 0..=TEST_STEPS {
             let d = (i as f64) / (TEST_STEPS as f64);
             let cr = catmull_rom_value(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
@@ -272,11 +297,6 @@ mod tests {
         let b2 = bezier.1;
         let b3 = bezier.2;
         let b4 = bezier.3;
-
-        println!("b1 = {}, {}", b1.x, b1.y);
-        println!("b2 = {}, {}", b2.x, b2.y);
-        println!("b3 = {}, {}", b3.x, b3.y);
-        println!("b4 = {}, {}", b4.x, b4.y);
 
         for i in 0..=TEST_STEPS {
             let d = (i as f64) / (TEST_STEPS as f64);
