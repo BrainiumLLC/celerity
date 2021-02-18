@@ -1,3 +1,7 @@
+use gee::en;
+
+use crate::Animatable;
+
 // Newton-Raphson iterations
 const NR_ITERATIONS: usize = 3;
 
@@ -86,6 +90,19 @@ pub fn invert_bezier(ox: f64, ix: f64, x: f64) -> f64 {
     }
 
     t
+}
+
+// Find position for points with arbitrary # of dimensions
+pub fn cubic_bezier<V: Animatable<C>, C: en::Num>(b0: V, b1: V, b2: V, b3: V, t: f64) -> V {
+    let it = 1f64 - t;
+    let t0 = b0.map(|v0| en::cast::<C, _>(cube(it)) * v0);
+    let t1 = b1.map(|v1| en::cast::<C, _>(3f64 * square(it) * t) * v1);
+    let t2 = b2.map(|v2| en::cast::<C, _>(3f64 * it * square(t)) * v2);
+    let t3 = b3.map(|v3| en::cast::<C, _>(cube(t)) * v3);
+
+    let result = t0.zip_map(t1, |v, v1| v + v1).zip_map(t2, |v, v2| v + v2).zip_map(t3, |v, v3| v + v3);
+    
+    result
 }
 
 #[cfg(test)]

@@ -1,7 +1,9 @@
+use std::collections::binary_heap::Iter;
+
 use gee::en::{self};
 use time_point::Duration;
 
-use crate::coordinate::Coordinate;
+use crate::{coordinate::Coordinate, Animatable};
 
 const UNIFORM_ALPHA: f64 = 0.0;
 const CENTRIPETAL_ALPHA: f64 = 0.5;
@@ -9,17 +11,17 @@ const CHORDAL_ALPHA: f64 = 1.0;
 
 const TANGENT_EPSILON: f64 = 1e-5;
 
-pub fn catmull_rom_value<X: en::Num, Y: en::Num>(
-    p0: &Coordinate<X, Y>,
-    p1: &Coordinate<X, Y>,
-    p2: &Coordinate<X, Y>,
-    p3: &Coordinate<X, Y>,
+pub fn catmull_rom_value<V: Animatable<C>, C: en::Num>(
+    p0: &V,
+    p1: &V,
+    p2: &V,
+    p3: &V,
     t0: f64,
     t1: f64,
     t2: f64,
     t3: f64,
     t: f64,
-) -> Coordinate<X, Y> {
+) -> V {
     // In a Catmull-Rom (CR) spline, four control points are used along with four
     // knots describing the arc lengths between the points. For a centripetal CR
     // spline, the knots (t0-3) are described as follows:
@@ -56,78 +58,88 @@ pub fn catmull_rom_value<X: en::Num, Y: en::Num>(
     let dt0 = t - t0;
 
     let a1 = if d10 != 0.0 {
-        (*p0 * (d1t / d10)) + (*p1 * (dt0 / d10))
+        p0.zip_map(*p1, |v0, v1| {
+            en::cast(en::cast::<f64, _>(v0) * (d1t / d10) + en::cast::<f64, _>(v1) * (dt0 / d10))
+        })
     } else {
         *p0
     };
     let a2 = if d21 != 0.0 {
-        (*p1 * (d2t / d21)) + (*p2 * (-d1t / d21))
+        p1.zip_map(*p2, |v1, v2| {
+            en::cast(en::cast::<f64, _>(v1) * (d2t / d21) + en::cast::<f64, _>(v2) * (-d1t / d21))
+        })
     } else {
         *p1
     };
     let a3 = if d32 != 0.0 {
-        (*p2 * (d3t / d32)) + (*p3 * (-d2t / d32))
+        p2.zip_map(*p3, |v2, v3| {
+            en::cast(en::cast::<f64, _>(v2) * (d3t / d32) + en::cast::<f64, _>(v3) * (-d2t / d32))
+        })
     } else {
         *p2
     };
 
     let b1 = if d20 != 0.0 {
-        (a1 * (d2t / d20)) + (a2 * (dt0 / d20))
+        a1.zip_map(a2, |v1, v2| {
+            en::cast(en::cast::<f64, _>(v1) * (d2t / d20) + en::cast::<f64, _>(v2) * (dt0 / d20))
+        })
     } else {
         a1
     };
     let b2 = if d31 != 0.0 {
-        (a2 * (d3t / d31)) + (a3 * (-d1t / d31))
+        a2.zip_map(a3, |v2, v3| {
+            en::cast(en::cast::<f64, _>(v2) * (d3t / d31) + en::cast::<f64, _>(v3) * (-d1t / d31))
+        })
     } else {
         a2
     };
 
-    let c = if d21 != 0.0 {
-        (b1 * (d2t / d21)) + (b2 * (-d1t / d21))
+    if d21 != 0.0 {
+        b1.zip_map(b2, |v1, v2| {
+            en::cast(en::cast::<f64, _>(v1) * (d2t / d21) + en::cast::<f64, _>(v2) * (-d1t / d21))
+        })
     } else {
         b1
-    };
-
-    c
+    }
 }
 
 // Convert non-uniform catmull rom to equivalent bezier spline
 //
 // Uses numerical approximation
-pub fn catmull_rom_to_bezier<X: en::Num, Y: en::Num>(
-    p0: &Coordinate<X, Y>,
-    p1: &Coordinate<X, Y>,
-    p2: &Coordinate<X, Y>,
-    p3: &Coordinate<X, Y>,
+pub fn catmull_rom_to_bezier<V: Animatable<C>, C: en::Num>(
+    p0: &V,
+    p1: &V,
+    p2: &V,
+    p3: &V,
     t0: f64,
     t1: f64,
     t2: f64,
     t3: f64,
-) -> (
-    Coordinate<X, Y>,
-    Coordinate<X, Y>,
-    Coordinate<X, Y>,
-    Coordinate<X, Y>,
-) {
+) -> (V, V, V, V) {
     // Inner knot distance
     let s = t2 - t1;
 
     // Sample central difference around start and end
-    let a1 = catmull_rom_value(&p0, &p1, &p2, &p3, t0, t1, t2, t3, t1 - s * TANGENT_EPSILON);
-    let b1 = catmull_rom_value(&p0, &p1, &p2, &p3, t0, t1, t2, t3, t1 + s * TANGENT_EPSILON);
+    let a1 = catmull_rom_value(p0, p1, p2, p3, t0, t1, t2, t3, t1 - s * TANGENT_EPSILON);
+    let b1 = catmull_rom_value(p0, p1, p2, p3, t0, t1, t2, t3, t1 + s * TANGENT_EPSILON);
 
-    let a2 = catmull_rom_value(&p0, &p1, &p2, &p3, t0, t1, t2, t3, t2 - s * TANGENT_EPSILON);
-    let b2 = catmull_rom_value(&p0, &p1, &p2, &p3, t0, t1, t2, t3, t2 + s * TANGENT_EPSILON);
+    let a2 = catmull_rom_value(p0, p1, p2, p3, t0, t1, t2, t3, t2 - s * TANGENT_EPSILON);
+    let b2 = catmull_rom_value(p0, p1, p2, p3, t0, t1, t2, t3, t2 + s * TANGENT_EPSILON);
 
     // Scale to appropriate range
     // Bezier has factor of 3, central difference has factor of 2
-    let d1 = (b1 - a1) * (1.0 / (TANGENT_EPSILON * 6.0));
-    let d2 = (a2 - b2) * (1.0 / (TANGENT_EPSILON * 6.0));
+    let d1 = b1.distance_to(a1) * (1.0 / (TANGENT_EPSILON * 6.0));
+    let d2 = a2.distance_to(b2) * (1.0 / (TANGENT_EPSILON * 6.0));
 
-    (*p1, *p1 + d1, *p2 + d2, *p2)
+    (
+        *p1,
+        p1.map(|val| en::cast(en::cast::<f64, _>(val) + d1)),
+        p2.map(|val| en::cast(en::cast::<f64, _>(val) + d2)),
+        *p2,
+    )
 }
 
-// Cubic bezier with endpoints p0 / p3 and control points p1 / 2
+// Cubic bezier with endpoints p0 / p3 and control points p1 / p2
 pub fn bezier_value<X: en::Num, Y: en::Num>(
     p0: &Coordinate<X, Y>,
     p1: &Coordinate<X, Y>,
@@ -149,58 +161,28 @@ pub fn bezier_value<X: en::Num, Y: en::Num>(
 // alpha = 0.0: Uniform spline
 // alpha = 0.5: Centripetal spline
 // alpha = 1.0: Chordal spline
-pub fn t_values<X: en::Num, Y: en::Num>(
-    p0: &Coordinate<X, Y>,
-    p1: &Coordinate<X, Y>,
-    p2: &Coordinate<X, Y>,
-    p3: &Coordinate<X, Y>,
+pub fn t_values<V: Animatable<C>, C: en::Num>(
+    p0: &V,
+    p1: &V,
+    p2: &V,
+    p3: &V,
     alpha: f64,
 ) -> (f64, f64, f64, f64) {
-    let t1 = f64::powf(p0.distance_to(&p1), alpha);
-    let t2 = f64::powf(p1.distance_to(&p2), alpha) + t1;
-    let t3 = f64::powf(p2.distance_to(&p3), alpha) + t2;
+    let t1 = f64::powf(p0.distance_to(*p1), alpha);
+    let t2 = f64::powf(p1.distance_to(*p2), alpha) + t1;
+    let t3 = f64::powf(p2.distance_to(*p3), alpha) + t2;
 
     (0.0, t1, t2, t3)
 }
 
-// Calculate values of T, ignoring Y dimension
-pub fn t_values_x<X: en::Num, Y: en::Num>(
-    p0: &Coordinate<X, Y>,
-    p1: &Coordinate<X, Y>,
-    p2: &Coordinate<X, Y>,
-    p3: &Coordinate<X, Y>,
-    alpha: f64,
-) -> (f64, f64, f64, f64) {
-    let t1 = f64::powf(en::cast::<f64, _>(p1.x - p0.x).abs(), alpha);
-    let t2 = f64::powf(en::cast::<f64, _>(p2.x - p1.x).abs(), alpha) + t1;
-    let t3 = f64::powf(en::cast::<f64, _>(p3.x - p2.x).abs(), alpha) + t2;
-
-    (0.0, t1, t2, t3)
-}
-
-// Calculate values of T, ignoring X dimension
-pub fn t_values_y<X: en::Num, Y: en::Num>(
-    p0: &Coordinate<X, Y>,
-    p1: &Coordinate<X, Y>,
-    p2: &Coordinate<X, Y>,
-    p3: &Coordinate<X, Y>,
-    alpha: f64,
-) -> (f64, f64, f64, f64) {
-    let t1 = f64::powf(en::cast::<f64, _>(p1.y - p0.y).abs(), alpha);
-    let t2 = f64::powf(en::cast::<f64, _>(p2.y - p1.y).abs(), alpha) + t1;
-    let t3 = f64::powf(en::cast::<f64, _>(p3.y - p2.y).abs(), alpha) + t2;
-
-    (0.0, t1, t2, t3)
-}
-
-pub fn centripetal_catmull_rom<X: en::Num, Y: en::Num>(
-    p0: Coordinate<X, Y>,
-    p1: Coordinate<X, Y>,
-    p2: Coordinate<X, Y>,
-    p3: Coordinate<X, Y>,
+pub fn centripetal_catmull_rom<V: Animatable<C>, C: en::Num>(
+    p0: &V,
+    p1: &V,
+    p2: &V,
+    p3: &V,
     t: f64,
-) -> Coordinate<X, Y> {
-    let (t0, t1, t2, t3) = t_values(&p0, &p1, &p2, &p3, CENTRIPETAL_ALPHA);
+) -> V {
+    let (t0, t1, t2, t3) = t_values(p0, p1, p2, p3, CENTRIPETAL_ALPHA);
 
     // Our input t value ranges from 0-1, and needs to be scaled to match the spline's knots
     let adjusted_t = t1 + ((t2 - t1) * t);
@@ -223,11 +205,11 @@ pub fn catmull_rom_time_scale(
     };
 
     // Y-axis represents elapsed time as a percentage, 0-1
-    let relative_elapsed_spline_time = centripetal_catmull_rom(
-        Coordinate::new(d0.nanos, 0.0),
-        Coordinate::new(d1.nanos, 0.3333),
-        Coordinate::new(d2.nanos, 0.6666),
-        Coordinate::new(d3.nanos, 1.0),
+    let relative_elapsed_spline_time = centripetal_catmull_rom::<_, f64>(
+        &Coordinate::new(d0.nanos, 0.0),
+        &Coordinate::new(d1.nanos, 0.3333),
+        &Coordinate::new(d2.nanos, 0.6666),
+        &Coordinate::new(d3.nanos, 1.0),
         t_value,
     )
     .y;

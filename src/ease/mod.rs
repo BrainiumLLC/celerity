@@ -1,51 +1,52 @@
 pub(crate) mod bezier;
 
-use crate::Animatable;
 use gee::en;
 
-pub fn eased_lerp<V, T>(a: V, b: V, f: T, easing_fn: impl EasingFn<T>) -> V
+use crate::Animatable;
+
+pub fn eased_lerp<V, C>(a: V, b: V, f: f64, easing_fn: impl EasingFn) -> V
 where
-    V: Animatable<T>,
-    T: en::Float,
+    V: Animatable<C>,
+    C: en::Num,
 {
     a.lerp(b, easing_fn.ease(f))
 }
 
-pub trait EasingFn<T: en::Num>: Copy {
-    fn ease(&self, f: T) -> T;
+pub trait EasingFn: Copy {
+    fn ease(&self, f: f64) -> f64;
 }
 
-impl<T: en::Num, F: Copy + Fn(T) -> T> EasingFn<T> for F {
-    fn ease(&self, f: T) -> T {
+impl<F: Copy + Fn(f64) -> f64> EasingFn for F {
+    fn ease(&self, f: f64) -> f64 {
         (*self)(f)
     }
 }
 
-pub fn cosine<T: en::Float>(f: T) -> T {
-    let half = T::one().halved();
-    half - half * T::cos(T::PI() * f)
+pub fn cosine(f: f64) -> f64 {
+    let half = 0.5f64;
+    half - half * f64::cos(std::f64::consts::PI * f)
 }
 
-pub fn half<T: en::Float>(f: T) -> T {
+pub fn half(f: f64) -> f64 {
     f.powi(2)
 }
 
-pub fn slow_start<T: en::Float>(f: T) -> T {
-    if f < T::one() {
+pub fn slow_start(f: f64) -> f64 {
+    if f < 1f64 {
         half(f)
     } else {
-        T::two() * f - T::one()
+        2f64 * f - 1f64
     }
 }
 
-pub fn sine_ease_in<T: en::Float>(f: T) -> T {
-    T::one() - T::cos((f * T::PI()) / T::two())
+pub fn sine_ease_in(f: f64) -> f64 {
+    1f64 - f64::cos((f * std::f64::consts::PI) / 2f64)
 }
 
-pub fn sine_ease_out<T: en::Float>(f: T) -> T {
-    T::sin((f * T::PI()) / T::two())
+pub fn sine_ease_out(f: f64) -> f64 {
+    f64::sin((f * std::f64::consts::PI) / 2f64)
 }
 
-pub fn sine_ease_in_out<T: en::Float>(f: T) -> T {
-    -(T::cos(T::PI() * f) - T::one()) / T::two()
+pub fn sine_ease_in_out(f: f64) -> f64 {
+    -(f64::cos(std::f64::consts::PI * f) - 1f64 / 2f64)
 }
