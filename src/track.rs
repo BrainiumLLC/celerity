@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use crate::{
     catmullrom::{
         bezier_value, catmull_rom_time_scale, catmull_rom_to_bezier, centripetal_catmull_rom,
-        t_values, t_values_x, t_values_y,
+        t_values,
     },
     coordinate::Coordinate,
     ease::{
