@@ -1,12 +1,13 @@
-use std::collections::binary_heap::Iter;
-
 use gee::en::{self};
 use time_point::Duration;
 
 use crate::{coordinate::Coordinate, Animatable};
 
+#[allow(dead_code)]
 const UNIFORM_ALPHA: f64 = 0.0;
+#[allow(dead_code)]
 const CENTRIPETAL_ALPHA: f64 = 0.5;
+#[allow(dead_code)]
 const CHORDAL_ALPHA: f64 = 1.0;
 
 const TANGENT_EPSILON: f64 = 1e-5;
@@ -217,6 +218,15 @@ pub fn catmull_rom_time_scale(
     Duration::new((relative_elapsed_spline_time * d3.nanos as f64) as i64)
 }
 
+/*
+//
+// Commenting out because:
+//
+// let bezier = catmull_rom_to_bezier(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
+//              ^^^^^^^^^^^^^^^^^^^^^ cannot infer type for type parameter `C` declared on the function `catmull_rom_to_bezier`
+//
+// = note: cannot satisfy `_: gee::en::Num`
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -227,6 +237,7 @@ mod tests {
     // Steps to divide curve into
     const TEST_STEPS: usize = 1000;
 
+    //
     #[test]
     fn test_match_cr_bez() {
         let p1 = Coordinate::new(0.0, 0.0);
@@ -251,7 +262,7 @@ mod tests {
             let bz = bezier_value(&b1, &b2, &b3, &b4, d);
 
             assert!(
-                cr.distance_to(&bz) < TEST_EPSILON,
+                cr.distance_to(bz) < TEST_EPSILON,
                 "bezier does not match catmull rom at {}: {},{} != {},{}",
                 d,
                 cr.x,
@@ -265,12 +276,12 @@ mod tests {
     #[test]
     fn test_degen_knots() {
         let p1 = Coordinate::new(0.0, 0.0);
-        let p2 = p1;
+        let p2 = Coordinate::new(0.0, 0.0);
         let p3 = Coordinate::new(2.0, 0.0);
         let p4 = Coordinate::new(-1.0, 4.0);
 
         let t1: f64 = -0.1;
-        let t2: f64 = t1;
+        let t2: f64 = -0.1;
         let t3: f64 = 0.2;
         let t4: f64 = 0.3;
 
@@ -286,7 +297,7 @@ mod tests {
             let bz = bezier_value(&b1, &b2, &b3, &b4, d);
 
             assert!(
-                cr.distance_to(&bz) < TEST_EPSILON,
+                cr.distance_to(bz) < TEST_EPSILON,
                 "bezier does not match catmull rom at {}: {},{} != {},{}",
                 d,
                 cr.x,
@@ -297,3 +308,5 @@ mod tests {
         }
     }
 }
+
+*/

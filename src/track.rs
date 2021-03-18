@@ -1,15 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::{
-    catmullrom::{
-        bezier_value, catmull_rom_time_scale, catmull_rom_to_bezier, centripetal_catmull_rom,
-        t_values,
-    },
-    coordinate::Coordinate,
-    ease::{
-        bezier::{self, cubic_bezier_ease},
-        eased_lerp,
-    },
+    catmullrom::{catmull_rom_to_bezier, t_values},
+    ease::eased_lerp,
     Animatable, Animation, BoundedAnimation,
 };
 use gee::en;
@@ -92,7 +85,6 @@ impl BezierEase {
     }
 }
 
-
 #[derive(Clone, Copy, Debug)]
 pub struct BezierPath<V: Animatable<C>, C: en::Num> {
     pub ov: V,
@@ -101,7 +93,7 @@ pub struct BezierPath<V: Animatable<C>, C: en::Num> {
 }
 
 impl<V: Animatable<C>, C: en::Num> BezierPath<V, C> {
-    pub fn new (b0: V, b1: V, b2: V, b3: V) -> Self {
+    pub fn new(b0: V, b1: V, b2: V, b3: V) -> Self {
         let dv1v0 = b0.zip_map(b1, |v0, v1| v1 - v0);
         let dv2v0 = b0.zip_map(b2, |v0, v2| v2 - v0);
         let dv3v0 = b0.zip_map(b3, |v0, v3| v3 - v0);
@@ -109,7 +101,11 @@ impl<V: Animatable<C>, C: en::Num> BezierPath<V, C> {
         let ov = dv1v0.zip_map(dv3v0, |v10, v30| v10 / v30);
         let iv = dv2v0.zip_map(dv3v0, |v20, v30| v20 / v30);
 
-        Self {ov, iv, _marker: PhantomData}
+        Self {
+            ov,
+            iv,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -187,10 +183,7 @@ impl<V: Animatable<C>, C: en::Num> Track<V, C> {
             2 => Self::from_keyframes(vec![Keyframe::linear(frames[0]), Keyframe::hold(frames[1])]),
             _ => {
                 // Gather coordinate values from frames
-                let cr_coords = frames
-                    .iter()
-                    .map(|frame| frame.value)
-                    .collect::<Vec<_>>();
+                let cr_coords = frames.iter().map(|frame| frame.value).collect::<Vec<_>>();
 
                 // Construct Bezier Keyframes using Catmull-Rom spline
                 let mut keyframes = vec![];
@@ -239,20 +232,20 @@ impl<V: Animatable<C>, C: en::Num> Track<V, C> {
         &self,
         last_frame: &Keyframe<V, C>,
         next_frame: &Keyframe<V, C>,
-        control_points: &BezierPath<V, C>,
+        _control_points: &BezierPath<V, C>,
         last_frame_elapsed: Duration,
     ) -> V {
         let relative_elapsed = en::cast::<f64, _>(last_frame_elapsed.nanos)
             / en::cast::<f64, _>(next_frame.offset.nanos);
 
         // TODO: easing
-        let eased_elapsed = relative_elapsed;//cubic_bezier_ease(
-        //     control_points.ox,
-        //     control_points.oy,
-        //     control_points.ix,
-        //     control_points.iy,
-        //     relative_elapsed,
-        // );
+        let eased_elapsed = relative_elapsed; //cubic_bezier_ease(
+                                              //     control_points.ox,
+                                              //     control_points.oy,
+                                              //     control_points.ix,
+                                              //     control_points.iy,
+                                              //     relative_elapsed,
+                                              // );
 
         last_frame
             .value
@@ -288,6 +281,7 @@ impl<V: Animatable<C>, C: en::Num> Track<V, C> {
         &self.keyframes[0]
     }
 
+    #[allow(dead_code)]
     fn elapsed_frames(&self, elapsed: &Duration) -> Vec<&(Keyframe<V, C>, Duration)> {
         self.keyframes
             .iter()
@@ -302,6 +296,7 @@ impl<V: Animatable<C>, C: en::Num> Track<V, C> {
             .last()
     }
 
+    #[allow(dead_code)]
     fn upcoming_frames(&self, elapsed: &Duration) -> Vec<&(Keyframe<V, C>, Duration)> {
         self.keyframes
             .iter()

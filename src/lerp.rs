@@ -1,4 +1,4 @@
-use gee::en::{self, num_traits::pow};
+use gee::en;
 use std::fmt::Debug;
 
 use crate::util::{Map, ZipMap};
@@ -6,6 +6,20 @@ use crate::util::{Map, ZipMap};
 pub fn lerp<C: en::Num>(a: C, b: C, factor: f64) -> C {
     // This uses 2 multiplications to be numerically stable! Woo!
     en::cast(en::cast::<f64, _>(a) * (1f64 - factor) + en::cast::<f64, _>(b) * factor)
+}
+
+pub fn linear_value<V: Animatable<C>, C: en::Num>(p0: &V, p1: &V, t0: f64, t1: f64, t: f64) -> V {
+    let d10 = t1 - t0;
+    let dt0 = t - t0;
+    let d1t = t1 - t;
+
+    if d10 != 0.0 {
+        p0.zip_map(*p1, |v0, v1| {
+            en::cast(en::cast::<f64, _>(v0) * (d1t / d10) + en::cast::<f64, _>(v1) * (dt0 / d10))
+        })
+    } else {
+        *p0
+    }
 }
 
 pub trait Animatable<C>: Clone + Copy + Debug + ZipMap<C>
