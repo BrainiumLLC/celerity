@@ -1,4 +1,5 @@
 pub(crate) mod bezier;
+pub(crate) mod spline;
 
 use gee::en;
 

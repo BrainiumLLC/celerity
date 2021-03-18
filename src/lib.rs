@@ -4,13 +4,13 @@ mod coordinate;
 pub mod ease;
 mod lerp;
 pub mod track;
+pub mod track2;
 mod util;
 
 use std::fmt::Debug;
 
 pub use self::{combinator::*, lerp::*, track::*};
 
-use crate::util::Map as _;
 use gee::en;
 use time_point::{Duration, TimePoint};
 

@@ -16,7 +16,7 @@ pub fn cubic_bezier_ease(ox: f64, oy: f64, ix: f64, iy: f64, t: f64) -> f64 {
     // [0, 0], [ox, oy], [ix, iy], [1, 1]
     //
     // The easing curve is parametric and
-    // defined by (s ∈ [0, 1]):
+    // defined by (s ∈ [0...1]):
     //
     // x(s) = bezier X
     // y(s) = bezier Y
@@ -24,7 +24,7 @@ pub fn cubic_bezier_ease(ox: f64, oy: f64, ix: f64, iy: f64, t: f64) -> f64 {
     // The output is found by inverting x(s) and composing it with y(s):
     // out = y(x^-1(t))
     //
-    // Note that Y is allowed to exceed [0, 1] to allow under/overshoot
+    // Note that Y is allowed to exceed [0...1] to allow under/overshoot
     // of 1D interpolation. But X is always monotonic (= invertible).
     //
     // Multiple cubic eases are typically chained so that the in
@@ -47,7 +47,7 @@ pub fn cubic_bezier_ease(ox: f64, oy: f64, ix: f64, iy: f64, t: f64) -> f64 {
 }
 
 fn lookup(ox: f64, oy: f64, ix: f64, iy: f64, t: f64) -> f64 {
-    bezier(oy, iy, invert_bezier(ox, ix, t))
+    fixed_bezier(oy, iy, invert_fixed_bezier(ox, ix, t))
 }
 
 fn square(x: f64) -> f64 {
@@ -58,26 +58,26 @@ fn cube(x: f64) -> f64 {
 }
 
 // Exact x(t) with fixed first and last control point
-pub fn bezier(ox: f64, ix: f64, t: f64) -> f64 {
+pub fn fixed_bezier(ox: f64, ix: f64, t: f64) -> f64 {
     let it = 1.0 - t;
     ox * 3.0 * square(it) * t + ix * 3.0 * it * square(t) + cube(t)
 }
 
 // Exact dx(t)/dt with fixed first and last control point
-pub fn dt_bezier(ox: f64, ix: f64, t: f64) -> f64 {
+pub fn dt_fixed_bezier(ox: f64, ix: f64, t: f64) -> f64 {
     3.0 * (ox * (1.0 - t * (4.0 - 3.0 * t)) + t * (ix * (2.0 - 3.0 * t) + t))
 }
 
 // Approximate t = x^-1(x)
-pub fn invert_bezier(ox: f64, ix: f64, x: f64) -> f64 {
+pub fn invert_fixed_bezier(ox: f64, ix: f64, x: f64) -> f64 {
     // Use Newton-Raphson iteration starting from the input time
     //
     // Converges O(1/n^2) almost everywhere,
     // except near horizontal tangents where it is O(1/n).
     let mut t = x;
     for _ in 1..=NR_ITERATIONS {
-        let v = bezier(ox, ix, t) - x;
-        let dvdt = dt_bezier(ox, ix, t);
+        let v = fixed_bezier(ox, ix, t) - x;
+        let dvdt = dt_fixed_bezier(ox, ix, t);
 
         if v == 0.0 {
             break;
@@ -93,15 +93,36 @@ pub fn invert_bezier(ox: f64, ix: f64, x: f64) -> f64 {
 }
 
 // Find position for points with arbitrary # of dimensions
-pub fn cubic_bezier<V: Animatable<C>, C: en::Num>(b0: V, b1: V, b2: V, b3: V, t: f64) -> V {
-    let it = 1f64 - t;
+#[allow(dead_code)]
+pub fn cubic_bezier<V: Animatable<C>, C: en::Num>(b0: &V, b1: &V, b2: &V, b3: &V, t: f64) -> V {
+    let it = 1.0 - t;
     let t0 = b0.map(|v0| en::cast::<C, _>(cube(it)) * v0);
-    let t1 = b1.map(|v1| en::cast::<C, _>(3f64 * square(it) * t) * v1);
-    let t2 = b2.map(|v2| en::cast::<C, _>(3f64 * it * square(t)) * v2);
+    let t1 = b1.map(|v1| en::cast::<C, _>(3.0 * square(it) * t) * v1);
+    let t2 = b2.map(|v2| en::cast::<C, _>(3.0 * it * square(t)) * v2);
     let t3 = b3.map(|v3| en::cast::<C, _>(cube(t)) * v3);
 
-    let result = t0.zip_map(t1, |v, v1| v + v1).zip_map(t2, |v, v2| v + v2).zip_map(t3, |v, v3| v + v3);
-    
+    let result = t0
+        .zip_map(t1, |v, v1| v + v1)
+        .zip_map(t2, |v, v2| v + v2)
+        .zip_map(t3, |v, v3| v + v3);
+
+    result
+}
+
+// Find (exact) tangent/velocity for points with arbitrary # of dimensions
+#[allow(dead_code)]
+pub fn dt_cubic_bezier<V: Animatable<C>, C: en::Num>(b0: &V, b1: &V, b2: &V, b3: &V, t: f64) -> V {
+    let it = 1.0 - t;
+    let t0 = b0.map(|v0| en::cast::<C, _>(-3.0 * square(it)) * v0);
+    let t1 = b1.map(|v1| en::cast::<C, _>(3.0 * it * (it - 2.0 * t)) * v1);
+    let t2 = b2.map(|v2| en::cast::<C, _>(3.0 * t * (2.0 * it - t)) * v2);
+    let t3 = b3.map(|v3| en::cast::<C, _>(3.0 * square(t)) * v3);
+
+    let result = t0
+        .zip_map(t1, |v, v1| v + v1)
+        .zip_map(t2, |v, v2| v + v2)
+        .zip_map(t3, |v, v3| v + v3);
+
     result
 }
 
@@ -162,8 +183,8 @@ mod tests {
         for i in 0..=TEST_STEPS {
             let ti = (i as f64) * step;
 
-            let to = invert_bezier(ox, ix, ti);
-            let tti = bezier(ox, ix, to);
+            let to = invert_fixed_bezier(ox, ix, ti);
+            let tti = fixed_bezier(ox, ix, to);
 
             assert!(
                 approx_eq(tti, ti, TEST_TOLERANCE_EXACT),
@@ -189,10 +210,9 @@ mod tests {
             let to3 = cubic_bezier_ease(ox, oy, ix, iy, ti + step);
 
             let mid = (to1 + to3) / 2.0;
-            let error = (mid - to2).abs();
 
             assert!(
-                error < TEST_TOLERANCE_APPROX,
+                approx_eq(mid, to2, TEST_TOLERANCE_APPROX),
                 "curve is not smooth at {}: {} {} {}",
                 ti,
                 to1,
