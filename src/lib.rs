@@ -2,9 +2,9 @@ pub mod catmullrom;
 pub mod combinator;
 mod coordinate;
 pub mod ease;
+pub mod interval;
 mod lerp;
 pub mod track;
-pub mod track2;
 mod util;
 
 use std::fmt::Debug;

@@ -1,19 +1,15 @@
 use std::marker::PhantomData;
 
 use crate::{
+    catmullrom::{catmull_rom_to_bezier, t_values},
     ease::{
         bezier::{cubic_bezier, cubic_bezier_ease},
         spline::{spline_ease, SplineMap},
     },
-    Animatable, Animation, BoundedAnimation,
+    Animatable, Animation, AnimationStyle, BoundedAnimation, Frame, Keyframe,
 };
 use gee::en;
 use time_point::Duration;
-
-#[derive(Clone, Debug)]
-pub struct IntervalTrack<V: Animatable<C>, C: en::Num> {
-    intervals: Vec<Interval<V, C>>,
-}
 
 #[derive(Clone, Debug)]
 pub struct Interval<V: Animatable<C>, C: en::Num> {
@@ -24,7 +20,221 @@ pub struct Interval<V: Animatable<C>, C: en::Num> {
     pub ease: Option<BezierEase>,
     pub path: Option<BezierPath<V, C>>,
     pub metric: Option<SplineMap>,
-    _marker: PhantomData<C>,
+}
+
+impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
+    pub fn new(
+        start: Duration,
+        end: Duration,
+        from: V,
+        to: V,
+        ease: Option<BezierEase>,
+        path: Option<BezierPath<V, C>>,
+        metric: Option<SplineMap>,
+    ) -> Self {
+        Self {
+            start,
+            end,
+            from,
+            to,
+            ease,
+            path,
+            metric,
+        }
+    }
+
+    pub fn percent_elapsed(&self, elapsed: Duration) -> f64 {
+        (elapsed.clamp(self.start, self.end) - self.start).div_duration_f64(self.end - self.start)
+    }
+
+    pub fn sample(&self, elapsed: Duration) -> V {
+        // Apply temporal easing (or not)
+        let percent_elapsed = self.percent_elapsed(elapsed);
+        let eased_time = self
+            .ease
+            .as_ref()
+            .map(|e| cubic_bezier_ease(e.ox, e.oy, e.ix, e.iy, percent_elapsed))
+            .unwrap_or(percent_elapsed);
+
+        // Map eased distance to spline time using spline map (or not)
+        let spline_time = self
+            .metric
+            .as_ref()
+            .map(|m| spline_ease(&m, eased_time))
+            .unwrap_or(eased_time);
+
+        // Look up value along spline (or lerp)
+        let value = self
+            .path
+            .as_ref()
+            .map(|p| cubic_bezier(&self.from, &p.b1, &p.b2, &self.to, spline_time))
+            .unwrap_or_else(|| self.from.lerp(self.to, spline_time));
+        value
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct IntervalTrack<V: Animatable<C>, C: en::Num> {
+    intervals: Vec<Interval<V, C>>,
+}
+
+impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
+    pub fn new() -> Self {
+        Self { intervals: vec![] }
+    }
+
+    pub fn auto_bezier(frames: Vec<Frame<V, C>>) -> Self {
+        let mut intervals = vec![];
+        let mut acc_elapsed = Duration::new(0);
+
+        for i in 0..frames.len() - 1 {
+            intervals.push({
+                // Determine Catmull-Rom (cr) coordinates for current interval
+                let f0 = if i == 0 {
+                    frames[0] // We may want to augment this point to influence our animation
+                } else {
+                    frames[i - 1]
+                };
+                let f1 = frames[i];
+                let f2 = frames[i + 1];
+                let f3 = if i == frames.len() - 2 {
+                    frames[i + 1] // We may want to augment this point to influence our animation
+                } else {
+                    frames[i + 2]
+                };
+
+                // Determine Bezier control points
+                let (t0, t1, t2, t3) = t_values(&f0.value, &f1.value, &f2.value, &f3.value, 0.5);
+                let (b0, b1, b2, b3) = catmull_rom_to_bezier(
+                    &f0.value, &f1.value, &f2.value, &f3.value, t0, t1, t2, t3,
+                );
+
+                let interval = Interval::new(
+                    acc_elapsed,
+                    acc_elapsed + frames[i + 1].offset,
+                    frames[i].value,
+                    frames[i + 1].value,
+                    None,
+                    Some(BezierPath::new(b1, b2)),
+                    Some(SplineMap::from_bezier(&b0, &b1, &b2, &b3)),
+                );
+                acc_elapsed = acc_elapsed + frames[i + 1].offset;
+                interval
+            });
+        }
+
+        Self::new().with_intervals(intervals)
+    }
+
+    pub fn from_keyframes(keyframes: Vec<Keyframe<V, C>>) -> Self {
+        match keyframes.len() {
+            0 => Self::new(),
+            1 => {
+                // How should an interval interpret a single frame?
+                panic!("Unable to construct interval from a single frame");
+            }
+            _ => {
+                let mut intervals = vec![];
+                let mut acc_offset = Duration::new(0);
+                // check each keyframe's animation style to construct an appropriate interval
+                for i in 0..keyframes.len() - 1 {
+                    acc_offset = acc_offset + keyframes[i].offset;
+                    intervals.push(match &keyframes[i].style {
+                        AnimationStyle::Hold => Interval::new(
+                            acc_offset,
+                            acc_offset + keyframes[i + 1].offset,
+                            keyframes[i].value,
+                            keyframes[i].value,
+                            None,
+                            None,
+                            None,
+                        ),
+                        AnimationStyle::Linear => Interval::new(
+                            acc_offset,
+                            acc_offset + keyframes[i + 1].offset,
+                            keyframes[i].value,
+                            keyframes[i + 1].value,
+                            None,
+                            None,
+                            None,
+                        ),
+                        AnimationStyle::Bezier(ease, path, metric) => Interval::new(
+                            acc_offset,
+                            acc_offset + keyframes[i + 1].offset,
+                            keyframes[i].value,
+                            keyframes[i + 1].value,
+                            ease.clone(),
+                            Some(path.clone()),
+                            metric.clone(),
+                        ),
+                        AnimationStyle::Eased(ease) => Interval::new(
+                            acc_offset,
+                            acc_offset + keyframes[i + 1].offset,
+                            keyframes[i].value,
+                            keyframes[i + 1].value,
+                            None,
+                            None,
+                            Some(SplineMap::from_spline(ease)),
+                        ),
+                    });
+                }
+
+                Self::new().with_intervals(intervals)
+            }
+        }
+    }
+
+    // TODO
+    // pub fn from_bodymovin(data: BodyMovinData) -> Self {
+    //
+    // }
+
+    pub fn with_interval(mut self, interval: Interval<V, C>) -> Self {
+        self.add_interval(interval);
+        self
+    }
+
+    pub fn with_intervals(mut self, intervals: impl IntoIterator<Item = Interval<V, C>>) -> Self {
+        self.add_intervals(intervals);
+        self
+    }
+
+    pub fn add_interval(&mut self, interval: Interval<V, C>) -> &mut Self {
+        self.intervals.push(interval);
+        self
+    }
+
+    pub fn add_intervals(
+        &mut self,
+        intervals: impl IntoIterator<Item = Interval<V, C>>,
+    ) -> &mut Self {
+        for interval in intervals {
+            self.add_interval(interval);
+        }
+        self
+    }
+
+    pub fn current_interval(&self, elapsed: &Duration) -> Option<&Interval<V, C>> {
+        self.intervals
+            .iter()
+            .find(|interval| interval.end > *elapsed)
+            .or_else(|| self.intervals.last())
+    }
+}
+
+impl<V: Animatable<C>, C: en::Num> Animation<V, C> for IntervalTrack<V, C> {
+    fn sample(&self, elapsed: Duration) -> V {
+        self.current_interval(&elapsed).unwrap().sample(elapsed)
+    }
+}
+
+impl<V: Animatable<C>, C: en::Num> BoundedAnimation<V, C> for IntervalTrack<V, C> {
+    fn duration(&self) -> Duration {
+        self.intervals
+            .last()
+            .map(|interval| interval.end)
+            .unwrap_or(Duration::from_secs_f64(0.0))
+    }
 }
 
 // Describes the temporal Bezier ease between two Animatables
@@ -43,6 +253,10 @@ pub struct BezierEase {
 impl BezierEase {
     pub fn new(ox: f64, oy: f64, ix: f64, iy: f64) -> Self {
         Self { ox, oy, ix, iy }
+    }
+
+    pub fn ease(&self, t: f64) -> f64 {
+        cubic_bezier_ease(self.ox, self.oy, self.ix, self.iy, t)
     }
 }
 
@@ -66,56 +280,9 @@ impl<V: Animatable<C>, C: en::Num> BezierPath<V, C> {
             _marker: PhantomData,
         }
     }
-}
 
-impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
-    pub fn current_interval(&self, elapsed: &Duration) -> Option<&Interval<V, C>> {
-        self.intervals
-            .iter()
-            .find(|interval| interval.end < *elapsed)
-            .or_else(|| self.intervals.last())
-    }
-}
-
-impl<V: Animatable<C>, C: en::Num> Animation<V, C> for IntervalTrack<V, C> {
-    fn sample(&self, elapsed: Duration) -> V {
-        // Get interval
-        let interval = self.current_interval(&elapsed).unwrap();
-
-        // Clamp time to current interval
-        let time = elapsed.clamp(interval.start, interval.end);
-
-        // Apply temporal easing (or not)
-        let fraction = (time - interval.start).div_duration_f64(interval.end - interval.start);
-        let eased_time = interval
-            .ease
-            .as_ref()
-            .map(|e| cubic_bezier_ease(e.ox, e.oy, e.ix, e.iy, fraction))
-            .unwrap_or(fraction);
-
-        // Map eased distance to spline time using spline map (or not)
-        let spline_time = interval
-            .metric
-            .as_ref()
-            .map(|m| spline_ease(&m, eased_time))
-            .unwrap_or(eased_time);
-
-        // Look up value along spline (or lerp)
-        let value = interval
-            .path
-            .as_ref()
-            .map(|p| cubic_bezier(&interval.from, &p.b1, &p.b2, &interval.to, spline_time))
-            .unwrap_or_else(|| interval.from.lerp(interval.to, spline_time));
-        value
-    }
-}
-
-impl<V: Animatable<C>, C: en::Num> BoundedAnimation<V, C> for IntervalTrack<V, C> {
-    fn duration(&self) -> Duration {
-        self.intervals
-            .last()
-            .map(|interval| interval.end)
-            .unwrap_or(Duration::from_secs_f64(0.0))
+    pub fn position(&self, b0: &V, b3: &V, t: f64) -> V {
+        cubic_bezier(b0, &self.b1, &self.b2, b3, t)
     }
 }
 

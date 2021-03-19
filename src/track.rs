@@ -2,7 +2,12 @@ use std::marker::PhantomData;
 
 use crate::{
     catmullrom::{catmull_rom_to_bezier, t_values},
-    ease::eased_lerp,
+    ease::{
+        bezier::{cubic_bezier, cubic_bezier_ease},
+        eased_lerp,
+        spline::{spline_ease, SplineMap},
+    },
+    interval::{BezierEase, BezierPath},
     Animatable, Animation, BoundedAnimation,
 };
 use gee::en;
@@ -12,7 +17,7 @@ use time_point::Duration;
 pub enum AnimationStyle<V: Animatable<C>, C: en::Num> {
     Linear,
     Hold,
-    Bezier(BezierPath<V, C>), // TODO: ease
+    Bezier(Option<BezierEase>, BezierPath<V, C>, Option<SplineMap>),
     Eased(fn(f64) -> f64),
 }
 
@@ -61,51 +66,12 @@ impl<V: Animatable<C>, C: en::Num> Keyframe<V, C> {
         Self::new(frame.offset, frame.value, AnimationStyle::Hold)
     }
 
-    pub fn bezier(frame: Frame<V, C>, control_points: BezierPath<V, C>) -> Self {
+    pub fn bezier(frame: Frame<V, C>, ease: BezierEase, path: BezierPath<V, C>) -> Self {
         Self::new(
             frame.offset,
             frame.value,
-            AnimationStyle::Bezier(control_points),
+            AnimationStyle::Bezier(Some(ease), path, None),
         )
-    }
-}
-
-// Describes the Bezier ease between two Animatables
-#[derive(Debug, Clone, Copy)]
-pub struct BezierEase {
-    pub ox: f64,
-    pub oy: f64,
-    pub ix: f64,
-    pub iy: f64,
-}
-
-impl BezierEase {
-    pub fn new(ox: f64, oy: f64, ix: f64, iy: f64) -> Self {
-        Self { ox, oy, ix, iy }
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct BezierPath<V: Animatable<C>, C: en::Num> {
-    pub ov: V,
-    pub iv: V,
-    _marker: PhantomData<C>,
-}
-
-impl<V: Animatable<C>, C: en::Num> BezierPath<V, C> {
-    pub fn new(b0: V, b1: V, b2: V, b3: V) -> Self {
-        let dv1v0 = b0.zip_map(b1, |v0, v1| v1 - v0);
-        let dv2v0 = b0.zip_map(b2, |v0, v2| v2 - v0);
-        let dv3v0 = b0.zip_map(b3, |v0, v3| v3 - v0);
-
-        let ov = dv1v0.zip_map(dv3v0, |v10, v30| v10 / v30);
-        let iv = dv2v0.zip_map(dv3v0, |v20, v30| v20 / v30);
-
-        Self {
-            ov,
-            iv,
-            _marker: PhantomData,
-        }
     }
 }
 
@@ -119,18 +85,20 @@ impl<V: Animatable<C>, C: en::Num> Animation<V, C> for Track<V, C> {
         if let Some((next_frame, next_abs_offset)) = self.next_upcoming_frame(&elapsed) {
             let (last_frame, last_abs_offset) = self.last_elapsed_frame(&elapsed).unwrap();
             let style = &last_frame.style;
-            let relative_elapsed = en::cast::<f64, _>(elapsed.nanos - last_abs_offset.nanos)
+            let percent_elapsed = en::cast::<f64, _>(elapsed.nanos - last_abs_offset.nanos)
                 / en::cast::<f64, _>(next_abs_offset.nanos - last_abs_offset.nanos);
 
             match style {
                 AnimationStyle::Linear => last_frame
                     .value
-                    .lerp(next_frame.value, en::cast(relative_elapsed)),
+                    .lerp(next_frame.value, en::cast(percent_elapsed)),
                 AnimationStyle::Hold => last_frame.value,
-                AnimationStyle::Bezier(control_points) => self.bezier_sample(
+                AnimationStyle::Bezier(ease, path, metric) => self.bezier_sample(
                     last_frame,
                     next_frame,
-                    control_points,
+                    ease,
+                    path,
+                    metric,
                     elapsed - *last_abs_offset,
                 ),
                 AnimationStyle::Eased(ease) => self.eased_sample(elapsed, *ease),
@@ -212,7 +180,11 @@ impl<V: Animatable<C>, C: en::Num> Track<V, C> {
                     keyframes.push(Keyframe::new(
                         frames[i].offset,
                         b0,
-                        AnimationStyle::Bezier(BezierPath::new(b0, b1, b2, b3)),
+                        AnimationStyle::Bezier(
+                            None,
+                            BezierPath::new(b1, b2),
+                            Some(SplineMap::from_bezier(&b0, &b1, &b2, &b3)),
+                        ),
                     ));
                 }
 
@@ -232,24 +204,33 @@ impl<V: Animatable<C>, C: en::Num> Track<V, C> {
         &self,
         last_frame: &Keyframe<V, C>,
         next_frame: &Keyframe<V, C>,
-        _control_points: &BezierPath<V, C>,
+        ease: &Option<BezierEase>,
+        path: &BezierPath<V, C>,
+        metric: &Option<SplineMap>,
         last_frame_elapsed: Duration,
     ) -> V {
-        let relative_elapsed = en::cast::<f64, _>(last_frame_elapsed.nanos)
+        // Apply temporal easing (or not)
+        let percent_elapsed = en::cast::<f64, _>(last_frame_elapsed.nanos)
             / en::cast::<f64, _>(next_frame.offset.nanos);
+        let eased_time = ease
+            .as_ref()
+            .map(|e| cubic_bezier_ease(e.ox, e.oy, e.ix, e.iy, percent_elapsed))
+            .unwrap_or(percent_elapsed);
 
-        // TODO: easing
-        let eased_elapsed = relative_elapsed; //cubic_bezier_ease(
-                                              //     control_points.ox,
-                                              //     control_points.oy,
-                                              //     control_points.ix,
-                                              //     control_points.iy,
-                                              //     relative_elapsed,
-                                              // );
+        // Map eased distance to spline time using spline map (or not)
+        let spline_time = metric
+            .as_ref()
+            .map(|m| spline_ease(&m, eased_time))
+            .unwrap_or(eased_time);
 
-        last_frame
-            .value
-            .lerp(next_frame.value, en::cast(eased_elapsed))
+        // Look up value along spline (or lerp)
+        cubic_bezier(
+            &last_frame.value,
+            &path.b1,
+            &path.b2,
+            &next_frame.value,
+            spline_time,
+        )
     }
 
     fn eased_sample(&self, elapsed: Duration, easing: fn(f64) -> f64) -> V {
