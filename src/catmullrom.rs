@@ -129,13 +129,17 @@ pub fn catmull_rom_to_bezier<V: Animatable<C>, C: en::Num>(
 
     // Scale to appropriate range
     // Bezier has factor of 3, central difference has factor of 2
-    let d1 = b1.distance_to(a1) * (1.0 / (TANGENT_EPSILON * 6.0));
-    let d2 = a2.distance_to(b2) * (1.0 / (TANGENT_EPSILON * 6.0));
+    let d1 = b1
+        .zip_map(a1, |b, a| b - a)
+        .map(|d| d * en::cast::<C, _>(1.0 / (TANGENT_EPSILON * 6.0)));
+    let d2 = a2
+        .zip_map(b2, |b, a| b - a)
+        .map(|d| d * en::cast::<C, _>(1.0 / (TANGENT_EPSILON * 6.0)));
 
     (
         *p1,
-        p1.map(|val| en::cast(en::cast::<f64, _>(val) + d1)),
-        p2.map(|val| en::cast(en::cast::<f64, _>(val) + d2)),
+        p1.zip_map(d1, |val, d| val + d),
+        p2.zip_map(d2, |val, d| val + d),
         *p2,
     )
 }
