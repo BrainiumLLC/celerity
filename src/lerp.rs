@@ -68,10 +68,6 @@ impl<C> Animatable<C> for (C, C)
 where
     C: en::Num,
 {
-    fn lerp(self, other: Self, f: f64) -> Self {
-        (self.0.lerp(other.0, f), self.1.lerp(other.1, f))
-    }
-
     fn distance_to(self, other: Self) -> f64 {
         let a = self.0 - other.0;
         let b = self.1 - other.1;
@@ -101,10 +97,6 @@ impl<C> Animatable<C> for gee::Point<C>
 where
     C: en::Num,
 {
-    fn lerp(self, other: Self, f: f64) -> Self {
-        gee::Point::from_tuple(self.to_tuple().lerp(other.to_tuple(), f))
-    }
-
     fn distance_to(self, other: Self) -> f64 {
         let a = self.x - other.x;
         let b = self.y - other.y;
