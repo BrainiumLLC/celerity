@@ -5,7 +5,7 @@ use crate::Animatable;
 // Newton-Raphson iterations
 const NR_ITERATIONS: usize = 3;
 
-#[allow(dead_code)]
+
 pub fn cubic_bezier_ease(ox: f64, oy: f64, ix: f64, iy: f64, t: f64) -> f64 {
     // Uses a cubic 2D bezier curve to map linear interpolation time
     // to eased interpolation time.
@@ -37,6 +37,9 @@ pub fn cubic_bezier_ease(ox: f64, oy: f64, ix: f64, iy: f64, t: f64) -> f64 {
 
     // Extend the curve beyond start and end by mirroring/flipping
     // This allows good central differences to be taken around start/end
+
+    //if ox == ox && ix == iy { return t; }
+
     if t < 0.0 {
         -lookup(ox, oy, ix, iy, -t)
     } else if t > 1.0 {
@@ -93,7 +96,6 @@ pub fn invert_fixed_bezier(ox: f64, ix: f64, x: f64) -> f64 {
 }
 
 // Find position for points with arbitrary # of dimensions
-#[allow(dead_code)]
 pub fn cubic_bezier<V: Animatable<C>, C: en::Num>(b0: &V, b1: &V, b2: &V, b3: &V, t: f64) -> V {
     let it = 1.0 - t;
     let t0 = b0.map(|v0| en::cast::<C, _>(cube(it)) * v0);
@@ -110,7 +112,6 @@ pub fn cubic_bezier<V: Animatable<C>, C: en::Num>(b0: &V, b1: &V, b2: &V, b3: &V
 }
 
 // Find (exact) tangent/velocity for points with arbitrary # of dimensions
-#[allow(dead_code)]
 pub fn dt_cubic_bezier<V: Animatable<C>, C: en::Num>(b0: &V, b1: &V, b2: &V, b3: &V, t: f64) -> V {
     let it = 1.0 - t;
     let t0 = b0.map(|v0| en::cast::<C, _>(-3.0 * square(it)) * v0);

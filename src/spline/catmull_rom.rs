@@ -1,14 +1,10 @@
 use gee::en::{self};
-use time_point::Duration;
 
-use crate::{coordinate::Coordinate, Animatable};
+use crate::Animatable;
 
-#[allow(dead_code)]
-const UNIFORM_ALPHA: f64 = 0.0;
-#[allow(dead_code)]
+// const UNIFORM_ALPHA: f64 = 0.0;
 const CENTRIPETAL_ALPHA: f64 = 0.5;
-#[allow(dead_code)]
-const CHORDAL_ALPHA: f64 = 1.0;
+// const CHORDAL_ALPHA: f64 = 1.0;
 
 const TANGENT_EPSILON: f64 = 1e-5;
 
@@ -144,24 +140,6 @@ pub fn catmull_rom_to_bezier<V: Animatable<C>, C: en::Num>(
     )
 }
 
-// Cubic bezier with endpoints p0 / p3 and control points p1 / p2
-pub fn bezier_value<X: en::Num, Y: en::Num>(
-    p0: &Coordinate<X, Y>,
-    p1: &Coordinate<X, Y>,
-    p2: &Coordinate<X, Y>,
-    p3: &Coordinate<X, Y>,
-    t: f64,
-) -> Coordinate<X, Y> {
-    let t2 = t * t;
-    let t3 = t * t2;
-
-    let it = 1.0 - t;
-    let it2 = it * it;
-    let it3 = it * it2;
-
-    *p0 * it3 + *p1 * it2 * (3.0 * t) + *p2 * it * (3.0 * t2) + *p3 * t3
-}
-
 // Calculate values of T for a given alpha
 // alpha = 0.0: Uniform spline
 // alpha = 0.5: Centripetal spline
@@ -194,46 +172,11 @@ pub fn centripetal_catmull_rom<V: Animatable<C>, C: en::Num>(
     catmull_rom_value(&p0, &p1, &p2, &p3, t0, t1, t2, t3, adjusted_t)
 }
 
-pub fn catmull_rom_time_scale(
-    d0: Duration,
-    d1: Duration,
-    d2: Duration,
-    d3: Duration,
-    elapsed: Duration,
-) -> Duration {
-    // A curve which goes through durations d0-3 (x) at equidistant y positions allows us to
-    // transform elapsed time into elapsed spline time
-    let t_value = if d0 == d1 {
-        elapsed.nanos as f64 / d2.nanos as f64
-    } else {
-        (elapsed.nanos - d1.nanos) as f64 / (d2.nanos - d1.nanos) as f64
-    };
-
-    // Y-axis represents elapsed time as a percentage, 0-1
-    let relative_elapsed_spline_time = centripetal_catmull_rom::<_, f64>(
-        &Coordinate::new(d0.nanos, 0.0),
-        &Coordinate::new(d1.nanos, 0.3333),
-        &Coordinate::new(d2.nanos, 0.6666),
-        &Coordinate::new(d3.nanos, 1.0),
-        t_value,
-    )
-    .y;
-
-    Duration::new((relative_elapsed_spline_time * d3.nanos as f64) as i64)
-}
-
-/*
-//
-// Commenting out because:
-//
-// let bezier = catmull_rom_to_bezier(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
-//              ^^^^^^^^^^^^^^^^^^^^^ cannot infer type for type parameter `C` declared on the function `catmull_rom_to_bezier`
-//
-// = note: cannot satisfy `_: gee::en::Num`
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::spline::bezier::cubic_bezier;
 
     // Accuracy threshold for matching curves
     const TEST_EPSILON: f64 = 1e-7;
@@ -244,17 +187,17 @@ mod tests {
     //
     #[test]
     fn test_match_cr_bez() {
-        let p1 = Coordinate::new(0.0, 0.0);
-        let p2 = Coordinate::new(1.0, 0.0);
-        let p3 = Coordinate::new(2.0, 2.1);
-        let p4 = Coordinate::new(-1.0, 4.0);
+        let p1 = (0.0, 0.0);
+        let p2 = (1.0, 0.0);
+        let p3 = (2.0, 2.1);
+        let p4 = (-1.0, 4.0);
 
         let t1: f64 = -0.04;
         let t2: f64 = 0.15;
         let t3: f64 = 0.2;
         let t4: f64 = 0.3;
 
-        let bezier = catmull_rom_to_bezier(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
+        let bezier = catmull_rom_to_bezier::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
         let b1 = bezier.0;
         let b2 = bezier.1;
         let b3 = bezier.2;
@@ -262,34 +205,34 @@ mod tests {
 
         for i in 0..=TEST_STEPS {
             let d = (i as f64) / (TEST_STEPS as f64);
-            let cr = catmull_rom_value(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
-            let bz = bezier_value(&b1, &b2, &b3, &b4, d);
+            let cr = catmull_rom_value::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
+            let bz = cubic_bezier::<_, f64>(&b1, &b2, &b3, &b4, d);
 
             assert!(
-                cr.distance_to(bz) < TEST_EPSILON,
+                Animatable::<f64>::distance_to(cr, bz) < TEST_EPSILON,
                 "bezier does not match catmull rom at {}: {},{} != {},{}",
                 d,
-                cr.x,
-                cr.y,
-                bz.x,
-                bz.y
+                cr.0,
+                cr.1,
+                bz.0,
+                bz.1
             );
         }
     }
 
     #[test]
     fn test_degen_knots() {
-        let p1 = Coordinate::new(0.0, 0.0);
-        let p2 = Coordinate::new(0.0, 0.0);
-        let p3 = Coordinate::new(2.0, 0.0);
-        let p4 = Coordinate::new(-1.0, 4.0);
+        let p1 = (0.0, 0.0);
+        let p2 = (0.0, 0.0);
+        let p3 = (2.0, 0.0);
+        let p4 = (-1.0, 4.0);
 
         let t1: f64 = -0.1;
         let t2: f64 = -0.1;
         let t3: f64 = 0.2;
         let t4: f64 = 0.3;
 
-        let bezier = catmull_rom_to_bezier(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
+        let bezier = catmull_rom_to_bezier::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
         let b1 = bezier.0;
         let b2 = bezier.1;
         let b3 = bezier.2;
@@ -297,20 +240,18 @@ mod tests {
 
         for i in 0..=TEST_STEPS {
             let d = (i as f64) / (TEST_STEPS as f64);
-            let cr = catmull_rom_value(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
-            let bz = bezier_value(&b1, &b2, &b3, &b4, d);
+            let cr = catmull_rom_value::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
+            let bz = cubic_bezier::<_, f64>(&b1, &b2, &b3, &b4, d);
 
             assert!(
-                cr.distance_to(bz) < TEST_EPSILON,
+                Animatable::<f64>::distance_to(cr, bz) < TEST_EPSILON,
                 "bezier does not match catmull rom at {}: {},{} != {},{}",
                 d,
-                cr.x,
-                cr.y,
-                bz.x,
-                bz.y
+                cr.0,
+                cr.1,
+                bz.0,
+                bz.1
             );
         }
     }
 }
-
-*/

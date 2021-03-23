@@ -1,10 +1,11 @@
 use std::marker::PhantomData;
 
 use crate::{
-    catmullrom::{catmull_rom_to_bezier, t_values},
-    ease::{
+    
+    spline::{
         bezier::{cubic_bezier, cubic_bezier_ease},
-        spline::{spline_ease, SplineMap},
+        spline_ease, SplineMap,
+        catmull_rom::{catmull_rom_to_bezier, t_values},
     },
     Animatable, Animation, AnimationStyle, BoundedAnimation, Frame, Keyframe,
 };
@@ -325,7 +326,6 @@ mod tests {
             ease: None,
             path: None,
             metric: None,
-            _marker: PhantomData,
         };
 
         let track = IntervalTrack {
@@ -364,7 +364,6 @@ mod tests {
             }),
             path: None,
             metric: None,
-            _marker: PhantomData,
         };
 
         let track = IntervalTrack {
@@ -411,7 +410,6 @@ mod tests {
             }),
             path: None,
             metric: None,
-            _marker: PhantomData,
         };
 
         let track = IntervalTrack {
@@ -467,7 +465,6 @@ mod tests {
                 _marker: PhantomData,
             }),
             metric: Some(spline_map),
-            _marker: PhantomData,
         };
 
         let track = IntervalTrack {
@@ -528,7 +525,6 @@ mod tests {
                 _marker: PhantomData,
             }),
             metric: Some(spline_map),
-            _marker: PhantomData,
         };
 
         let track = IntervalTrack {

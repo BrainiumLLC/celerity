@@ -1,7 +1,5 @@
-pub mod catmullrom;
 pub mod combinator;
-mod coordinate;
-pub mod ease;
+pub mod spline;
 pub mod interval;
 mod lerp;
 pub mod track;
