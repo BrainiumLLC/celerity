@@ -3,6 +3,8 @@ use gee::en;
 use std::marker::PhantomData;
 use time_point::Duration;
 
+// Blend between animations A and B using F as the lerp ratio (0..1)
+
 pub struct Blend<A, B, F, V, C>
 where
     A: Animation<V, C>,

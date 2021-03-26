@@ -124,12 +124,37 @@ pub trait SmoothAnimation<V: Animatable<C>, C: en::Num>: Animation<V, C> {
 
         // Create linear continuation
         let linear = Linear::new(value, dt_value);
+        // Fn(Duration) -> V
+        // let linear = |elapsed| value + dt_value * elapsed.as_secs_f64();
+
+        // Option A:
+        // blend between ramp and B
+        // lerp(linear(A), B, Cosine)
+        // -> influence of B at start is 0
 
         // Create cosine ease
         let f = CosineEase::new(transition);
+        // Fn(Duration) -> V
+        // let f = |elapsed| 0.5 - 0.5 * (....).cos()
 
         // Return blend from linear to self
         Blend::new(linear, self, f)
+
+        // Option B:
+        // ramp to 0 + B
+        // lerp(linear(A), 0, Cosine) + B
+        // -> influence of B is always 100%
+        
+        // The difference:
+        // - Option A is always smooth even if B does not start smoothly
+        //   -> Option A alters B even if A is static
+        // - Option B is only smooth if B starts smoothly
+        //   -> Option B always gives faithful playback of B if A is static
+        
+        // Same Problem: return type is dramatically different for both
+        // - Option A: Blend<Linear<...>, Self, ...>
+        // - Option B: Sum<Blend<...>, Self, ...>
+        
     }
 
     fn continue_from<A>(
@@ -150,7 +175,11 @@ pub trait SmoothAnimation<V: Animatable<C>, C: en::Num>: Animation<V, C> {
 // Can't make interrupt_at generalized on the return type
 // ... associated type refers to Self
 
-impl<V, C> dyn SmoothAnimation<V, C, Interrupted = Blend<Linear<V, C>, Self, CosineEase, V, C>>
+impl<V, C> dyn SmoothAnimation<
+    V,
+    C,
+    Interrupted = Blend<Linear<V, C>, Self, CosineEase, V, C>
+>
 where 
 V: Animatable<C>,
 C: en::Num,

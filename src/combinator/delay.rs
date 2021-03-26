@@ -3,6 +3,8 @@ use gee::en;
 use std::marker::PhantomData;
 use time_point::Duration;
 
+// Delay animation A by a duration
+
 pub struct Delay<A, V, C>
 where
     A: Animation<V, C>,
