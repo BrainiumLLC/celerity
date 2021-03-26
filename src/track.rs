@@ -1,11 +1,11 @@
 use std::marker::PhantomData;
 
 use crate::{
-    spline::{
-        SplineMap,
-        catmull_rom::{catmull_rom_to_bezier, t_values},
-    },
     interval::{BezierEase, BezierPath},
+    spline::{
+        catmull_rom::{catmull_rom_to_bezier, t_values},
+        SplineMap,
+    },
     Animatable,
 };
 use gee::en;

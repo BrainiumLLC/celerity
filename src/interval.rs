@@ -1,11 +1,10 @@
 use std::marker::PhantomData;
 
 use crate::{
-    
     spline::{
         bezier::{cubic_bezier, cubic_bezier_ease},
-        spline_ease, SplineMap,
         catmull_rom::{catmull_rom_to_bezier, t_values},
+        spline_ease, SplineMap,
     },
     Animatable, Animation, AnimationStyle, BoundedAnimation, Frame, Keyframe,
 };
@@ -45,7 +44,12 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
     }
 
     pub fn percent_elapsed(&self, elapsed: Duration) -> f64 {
-        (elapsed.clamp(self.start, self.end) - self.start).div_duration_f64(self.end - self.start)
+        let len = self.end - self.start;
+        if len != Duration::zero() {
+            (elapsed.clamp(self.start, self.end) - self.start).div_duration_f64(len)
+        } else {
+            0.0
+        }
     }
 
     pub fn sample(&self, elapsed: Duration) -> V {
@@ -92,16 +96,16 @@ impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
             intervals.push({
                 // Determine Catmull-Rom (cr) coordinates for current interval
                 let f0 = if i == 0 {
-                    frames[0] // We may want to augment this point to influence our animation
+                    &frames[0] // We may want to augment this point to influence our animation
                 } else {
-                    frames[i - 1]
+                    &frames[i - 1]
                 };
-                let f1 = frames[i];
-                let f2 = frames[i + 1];
+                let f1 = &frames[i];
+                let f2 = &frames[i + 1];
                 let f3 = if i == frames.len() - 2 {
-                    frames[i + 1] // We may want to augment this point to influence our animation
+                    &frames[i + 1] // We may want to augment this point to influence our animation
                 } else {
-                    frames[i + 2]
+                    &frames[i + 2]
                 };
 
                 // Determine Bezier control points
@@ -112,14 +116,14 @@ impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
 
                 let interval = Interval::new(
                     acc_elapsed,
-                    acc_elapsed + frames[i + 1].offset,
-                    frames[i].value,
-                    frames[i + 1].value,
+                    acc_elapsed + f2.offset,
+                    f1.value,
+                    f2.value,
                     None,
                     Some(BezierPath::new(b1, b2)),
                     Some(SplineMap::from_bezier(&b0, &b1, &b2, &b3)),
                 );
-                acc_elapsed = acc_elapsed + frames[i + 1].offset;
+                acc_elapsed = acc_elapsed + f2.offset;
                 interval
             });
         }
@@ -131,8 +135,16 @@ impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
         match keyframes.len() {
             0 => Self::new(),
             1 => {
-                // How should an interval interpret a single frame?
-                panic!("Unable to construct interval from a single frame");
+                let keyframe = &keyframes[0];
+                Self::new().with_intervals(vec![Interval::new(
+                    keyframe.offset,
+                    keyframe.offset,
+                    keyframe.value,
+                    keyframe.value,
+                    None,
+                    None,
+                    None,
+                )])
             }
             _ => {
                 let mut intervals = vec![];

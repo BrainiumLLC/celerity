@@ -3,49 +3,50 @@ use gee::en;
 use std::marker::PhantomData;
 use time_point::Duration;
 
-pub struct Cutoff<A, V, C>
+pub struct Delay<A, V, C>
 where
     A: Animation<V, C>,
     V: Animatable<C>,
     C: en::Num,
 {
     anim: A,
-    cutoff: Duration,
+    delay: Duration,
     _marker: PhantomData<(V, C)>,
 }
 
-impl<A, V, C> Animation<V, C> for Cutoff<A, V, C>
+impl<A, V, C> Animation<V, C> for Delay<A, V, C>
 where
     A: Animation<V, C>,
     V: Animatable<C>,
     C: en::Num,
 {
     fn sample(&self, elapsed: Duration) -> V {
-        self.anim.sample(elapsed.min(self.cutoff))
+        self.anim
+            .sample((elapsed - self.delay).max(Duration::zero()))
     }
 }
 
-impl<A, V, C> BoundedAnimation<V, C> for Cutoff<A, V, C>
+impl<A, V, C> BoundedAnimation<V, C> for Delay<A, V, C>
 where
-    A: Animation<V, C>,
+    A: BoundedAnimation<V, C>,
     V: Animatable<C>,
     C: en::Num,
 {
     fn duration(&self) -> Duration {
-        self.cutoff
+        self.delay + self.anim.duration()
     }
 }
 
-impl<A, V, C> Cutoff<A, V, C>
+impl<A, V, C> Delay<A, V, C>
 where
     A: Animation<V, C>,
     V: Animatable<C>,
     C: en::Num,
 {
-    pub fn new(anim: A, cutoff: Duration) -> Self {
+    pub fn new(anim: A, delay: Duration) -> Self {
         Self {
             anim,
-            cutoff,
+            delay,
             _marker: PhantomData,
         }
     }
