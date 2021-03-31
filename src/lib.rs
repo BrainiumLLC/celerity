@@ -1,7 +1,7 @@
 pub mod combinator;
-pub mod spline;
 pub mod interval;
 mod lerp;
+pub mod spline;
 pub mod track;
 mod util;
 
@@ -73,6 +73,12 @@ pub trait BoundedAnimation<V: Animatable<C>, C: en::Num>: Animation<V, C> {
         Self: Sized,
     {
         Rev::new(self)
+    }
+}
+
+impl<V: Animatable<C>, C: en::Num> Debug for dyn BoundedAnimation<V, C> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "BoundedAnimation") // TODO: Include something meaningful?
     }
 }
 
