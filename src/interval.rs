@@ -1,11 +1,10 @@
 use std::marker::PhantomData;
 
 use crate::{
-    
     spline::{
         bezier::{cubic_bezier, cubic_bezier_ease},
-        spline_ease, SplineMap,
         catmull_rom::{catmull_rom_to_bezier, t_values},
+        spline_ease, SplineMap,
     },
     Animatable, Animation, AnimationStyle, BoundedAnimation, Frame, Keyframe,
 };
@@ -44,11 +43,29 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
         }
     }
 
+    pub fn from_frames(a: Frame<V, C>, b: Frame<V, C>) -> Self {
+        Self::new(a.offset, b.offset, a.value, b.value, None, None, None)
+    }
+
+    pub fn hold(value: V) -> Self {
+        Self::new(
+            Duration::zero(),
+            Duration::from_secs(1),
+            value,
+            value,
+            None,
+            None,
+            None,
+        )
+    }
+
     pub fn percent_elapsed(&self, elapsed: Duration) -> f64 {
         (elapsed.clamp(self.start, self.end) - self.start).div_duration_f64(self.end - self.start)
     }
+}
 
-    pub fn sample(&self, elapsed: Duration) -> V {
+impl<V: Animatable<C>, C: en::Num> Animation<V, C> for Interval<V, C> {
+    fn sample(&self, elapsed: Duration) -> V {
         // Apply temporal easing (or not)
         let percent_elapsed = self.percent_elapsed(elapsed);
         let eased_time = self
@@ -71,6 +88,12 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
             .map(|p| cubic_bezier(&self.from, &p.b1, &p.b2, &self.to, spline_time))
             .unwrap_or_else(|| self.from.lerp(self.to, spline_time));
         value
+    }
+}
+
+impl<V: Animatable<C>, C: en::Num> BoundedAnimation<V, C> for Interval<V, C> {
+    fn duration(&self) -> Duration {
+        self.end - self.start
     }
 }
 
