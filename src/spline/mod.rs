@@ -3,8 +3,8 @@ pub mod catmull_rom;
 
 use gee::en;
 
-use self::catmull_rom::catmull_rom_value;
 use self::bezier::dt_cubic_bezier;
+use self::catmull_rom::catmull_rom_value;
 use crate::lerp::linear_value;
 use crate::Animatable;
 
@@ -75,7 +75,7 @@ pub fn find_index(spline_map: &SplineMap, distance: f64) -> usize {
 impl SplineMap {
     // Make a spline map to map "spline time" 0..1 to arc length 0..d.
     // Integrates with Euler's rule.
-    
+
     pub fn from_spline<V: Animatable<C>, C: en::Num, F: Fn(f64) -> V>(f: F) -> SplineMap {
         let mut steps = Vec::new();
         let mut length: f64 = 0.0;
@@ -107,7 +107,7 @@ impl SplineMap {
     // Make a spline map from a cubic bezier to map "spline time" 0..1 to arc length 0..d.
     // Uses analytic derivatives and simpson's rule for more accurate integration.
     // (only makes a difference for strongly cusped curves)
-    
+
     pub fn from_bezier<V: Animatable<C>, C: en::Num>(b0: &V, b1: &V, b2: &V, b3: &V) -> SplineMap {
         let mut steps = Vec::new();
         let mut length: f64 = 0.0;
@@ -155,8 +155,8 @@ impl SplineMap {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use self::bezier::cubic_bezier;
+    use super::*;
 
     const MATCH_TOLERANCE: f64 = 1e-3;
 
@@ -164,7 +164,6 @@ mod tests {
         lhs.is_finite() && rhs.is_finite() && ((lhs - epsilon)..(lhs + epsilon)).contains(&rhs)
     }
 
-    
     pub fn integrate_length<V: Animatable<C>, C: en::Num, F: Fn(f64) -> V>(
         from: f64,
         to: f64,

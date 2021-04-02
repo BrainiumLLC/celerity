@@ -5,7 +5,6 @@ use crate::Animatable;
 // Newton-Raphson iterations
 const NR_ITERATIONS: usize = 3;
 
-
 pub fn cubic_bezier_ease(ox: f64, oy: f64, ix: f64, iy: f64, t: f64) -> f64 {
     // Uses a cubic 2D bezier curve to map linear interpolation time
     // to eased interpolation time.

@@ -32,12 +32,12 @@ where
         // calculate ease
         let transition_percent_elapsed =
             (elapsed.as_secs_f64() / self.transition_t.as_secs_f64()).min(1.0);
-        let ease = cubic_bezier_ease(0.166, 0.0, 0.834, 1.0, transition_percent_elapsed);
+        let ease = cubic_bezier_ease(0.333, 0.0, 0.666, 1.0, transition_percent_elapsed);
 
         // blend a_contribution and b_contribution
         let blended_contributions = a_contribution.zip_map(b_contribution, |a, b| {
             let ac = a * en::cast::<C, _>(1.0 - ease);
-            let bc = b * en::cast::<C, _>(ease);
+            let bc = b;
             ac + bc
         });
 
@@ -71,7 +71,8 @@ where
             .zip_map(
                 a.sample(interrupt_t - Duration::from_secs_f64(SAMPLE_DELTA)),
                 |n, p| n - p,
-            ).map(|a| a * en::cast::<C, _>(0.5 / SAMPLE_DELTA));
+            )
+            .map(|a| a * en::cast::<C, _>(0.5 / SAMPLE_DELTA));
 
         let linear = Linear::new(interrupt_v, velocity);
 
@@ -96,7 +97,8 @@ where
             .zip_map(
                 a.sample(interrupt_t - Duration::from_secs_f64(SAMPLE_DELTA)),
                 |n, p| n - p,
-            ).map(|a| a * en::cast::<C, _>(0.5 / SAMPLE_DELTA));
+            )
+            .map(|a| a * en::cast::<C, _>(0.5 / SAMPLE_DELTA));
 
         let linear = Linear::new(interrupt_v, velocity);
 

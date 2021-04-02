@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::{
     spline::{
-        bezier::{cubic_bezier, cubic_bezier_ease},
+        bezier::{cubic_bezier, cubic_bezier_ease, fixed_bezier},
         catmull_rom::{catmull_rom_to_bezier, t_values},
         spline_ease, SplineMap,
     },
@@ -20,6 +20,16 @@ pub struct Interval<V: Animatable<C>, C: en::Num> {
     pub ease: Option<BezierEase>,
     pub path: Option<BezierPath<V, C>>,
     pub metric: Option<SplineMap>,
+}
+
+#[derive(Clone, Debug)]
+pub struct InspectInterval<V: Animatable<C>, C: en::Num> {
+    pub start: Duration,
+    pub end: Duration,
+    pub ease: Vec<(f64, f64)>,
+    pub path: Vec<(f64, V)>,
+    pub metric: Option<Vec<(f64, f64)>>,
+    _marker: PhantomData<C>,
 }
 
 impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
@@ -43,7 +53,31 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
         }
     }
 
-    pub fn from_frames(a: Frame<V, C>, b: Frame<V, C>) -> Self {
+    pub fn eased(a: Frame<V, C>, b: Frame<V, C>, ox: f64, oy: f64, ix: f64, iy: f64) -> Self {
+        Self::new(
+            a.offset,
+            b.offset,
+            a.value,
+            b.value,
+            Some(BezierEase::new(ox, oy, ix, iy)),
+            None,
+            None,
+        )
+    }
+
+    pub fn transition(a: Frame<V, C>, b: Frame<V, C>) -> Self {
+        Self::new(
+            a.offset,
+            b.offset,
+            a.value,
+            b.value,
+            Some(BezierEase::new(0.333, 0.0, 0.666, 1.0)),
+            None,
+            None,
+        )
+    }
+
+    pub fn linear(a: Frame<V, C>, b: Frame<V, C>) -> Self {
         Self::new(a.offset, b.offset, a.value, b.value, None, None, None)
     }
 
@@ -60,7 +94,39 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
     }
 
     pub fn percent_elapsed(&self, elapsed: Duration) -> f64 {
-        (elapsed.clamp(self.start, self.end) - self.start).div_duration_f64(self.end - self.start)
+        if self.start == self.end {
+            0.0
+        } else {
+            (elapsed.clamp(self.start, self.end) - self.start)
+                .div_duration_f64(self.end - self.start)
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn inspect(&self, detail: usize) -> InspectInterval<V, C> {
+        let sample_ease = |ease: &BezierEase| {
+            (0..detail)
+                .map(|i| {
+                    let t = (i as f64) / (detail as f64);
+                    (
+                        fixed_bezier(ease.ox, ease.ix, t),
+                        fixed_bezier(ease.oy, ease.iy, t),
+                    )
+                })
+                .collect()
+        };
+
+        InspectInterval {
+            start: self.start,
+            end: self.end,
+            path: self.sample_path(self.start, self.end, detail),
+            ease: match &self.ease {
+                Some(ease) => sample_ease(ease),
+                None => vec![(0.0, 0.0), (1.0, 1.0)],
+            },
+            metric: self.metric.as_ref().map(|metric| metric.steps.to_vec()),
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -154,8 +220,16 @@ impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
         match keyframes.len() {
             0 => Self::new(),
             1 => {
-                // How should an interval interpret a single frame?
-                panic!("Unable to construct interval from a single frame");
+                let keyframe = &keyframes[0];
+                Self::new().with_intervals(vec![Interval::new(
+                    keyframe.offset,
+                    keyframe.offset,
+                    keyframe.value,
+                    keyframe.value,
+                    None,
+                    None,
+                    None,
+                )])
             }
             _ => {
                 let mut intervals = vec![];
@@ -470,7 +544,6 @@ mod tests {
         let b1: gee::Point<f64> = gee::Point::new(-4.0, -4.0);
         let b2: gee::Point<f64> = gee::Point::new(4.0, 4.0);
 
-        //let spline_map = SplineMap::from_spline(|t| cubic_bezier(&from, &b1, &b2, &to, t));
         let spline_map = SplineMap::from_bezier(&from, &b1, &b2, &to);
 
         let length = spline_map.length;
@@ -525,7 +598,6 @@ mod tests {
         let b1: gee::Point<f64> = gee::Point::new(-4.0, -4.0);
         let b2: gee::Point<f64> = gee::Point::new(4.0, 4.0);
 
-        //let spline_map = SplineMap::from_spline(|t| cubic_bezier(&from, &b1, &b2, &to, t));
         let spline_map = SplineMap::from_bezier(&from, &b1, &b2, &to);
 
         let length = spline_map.length;
@@ -582,5 +654,43 @@ mod tests {
                 t4
             );
         }
+    }
+
+    #[test]
+    fn test_inspect() {
+        let start = Duration::from_secs_f64(10.0);
+        let end = Duration::from_secs_f64(20.0);
+
+        let from: gee::Point<f64> = gee::Point::new(-4.0, 0.0);
+        let to: gee::Point<f64> = gee::Point::new(4.0, 0.0);
+
+        let b1: gee::Point<f64> = gee::Point::new(-4.0, -4.0);
+        let b2: gee::Point<f64> = gee::Point::new(4.0, 4.0);
+
+        let spline_map = SplineMap::from_bezier(&from, &b1, &b2, &to);
+
+        let interval = Interval {
+            start,
+            end,
+            from,
+            to,
+            ease: Some(BezierEase {
+                ox: 0.5,
+                oy: 0.0,
+                ix: 0.5,
+                iy: 1.0,
+            }),
+            path: Some(BezierPath {
+                b1,
+                b2,
+                _marker: PhantomData,
+            }),
+            metric: Some(spline_map),
+        };
+
+        let inspect = interval.inspect(32);
+        assert!(inspect.ease.len() == 32);
+        assert!(inspect.path.len() == 32);
+        assert!(inspect.metric.unwrap().len() > 4);
     }
 }
