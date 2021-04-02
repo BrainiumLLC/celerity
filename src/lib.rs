@@ -21,6 +21,16 @@ pub trait Animation<V: Animatable<C>, C: en::Num> {
     {
         Cutoff::new(self, duration)
     }
+
+    fn sample_path(&self, start: Duration, end: Duration, detail: usize) -> Vec<(f64, V)> {
+        (0..detail)
+            .map(|i| {
+                let t = (i as f64) / (detail as f64);
+                let time = start + (end - start) * t;
+                (time.as_secs_f64(), self.sample(time))
+            })
+            .collect()
+    }
 }
 
 impl<V: Animatable<C>, C: en::Num> Debug for dyn Animation<V, C> {

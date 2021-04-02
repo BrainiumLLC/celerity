@@ -172,7 +172,6 @@ pub fn centripetal_catmull_rom<V: Animatable<C>, C: en::Num>(
     catmull_rom_value(&p0, &p1, &p2, &p3, t0, t1, t2, t3, adjusted_t)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -205,7 +204,8 @@ mod tests {
 
         for i in 0..=TEST_STEPS {
             let d = (i as f64) / (TEST_STEPS as f64);
-            let cr = catmull_rom_value::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
+            let cr =
+                catmull_rom_value::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
             let bz = cubic_bezier::<_, f64>(&b1, &b2, &b3, &b4, d);
 
             assert!(
@@ -240,7 +240,8 @@ mod tests {
 
         for i in 0..=TEST_STEPS {
             let d = (i as f64) / (TEST_STEPS as f64);
-            let cr = catmull_rom_value::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
+            let cr =
+                catmull_rom_value::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
             let bz = cubic_bezier::<_, f64>(&b1, &b2, &b3, &b4, d);
 
             assert!(
