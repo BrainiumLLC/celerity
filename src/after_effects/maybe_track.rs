@@ -38,11 +38,16 @@ impl<V: FromValue<C>, C: en::Num> Interval<V, C> {
         [from, to]: [&bodymovin::properties::ValueKeyframe; 2],
         frame_rate: f64,
     ) -> Interval<V, C> {
+        let from_value = V::from_value(from.start_value);
         Interval {
             start: Duration::from_secs_f64(from.start_time / frame_rate),
             end: Duration::from_secs_f64(to.start_time / frame_rate),
-            from: V::from_value(from.start_value),
-            to: V::from_value(to.start_value),
+            from: from_value,
+            to: if !from.hold {
+                V::from_value(to.start_value)
+            } else {
+                from_value
+            },
             ease: from.bezier.clone().map(Into::into),
             path: None,
             metric: None,
@@ -55,11 +60,16 @@ impl<V: FromMultiDimensional<C>, C: en::Num> Interval<V, C> {
         [from, to]: [&bodymovin::properties::OffsetKeyframe; 2],
         frame_rate: f64,
     ) -> Interval<V, C> {
+        let from_value = V::from_multi_dimensional(&from.start_value).unwrap();
         Interval {
             start: Duration::from_secs_f64(from.start_time / frame_rate),
             end: Duration::from_secs_f64(to.start_time / frame_rate),
-            from: V::from_multi_dimensional(&from.start_value).unwrap(),
-            to: V::from_multi_dimensional(&to.start_value).unwrap(),
+            from: from_value,
+            to: if !from.hold {
+                V::from_multi_dimensional(&to.start_value).unwrap()
+            } else {
+                from_value
+            },
             ease: from.bezier.clone().map(Into::into),
             path: None,
             metric: None,
