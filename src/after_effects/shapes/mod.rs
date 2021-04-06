@@ -39,7 +39,7 @@ pub struct Shape {
 
 fn politely_set<T: Debug>(dest: &mut Option<T>, val: T) {
     if let Some(existing) = dest {
-        log::error!(
+        log::warn!(
             "ignoring `{:?}` because we already have `{:?}`; this is probably a bug",
             val,
             existing
@@ -96,15 +96,15 @@ impl Shape {
                         );
                     }
                     bodymovin::shapes::AnyShape::Merge(merge) => {
-                        log::error!("merges aren't implemented yet; ignoring");
+                        log::warn!("merges aren't implemented yet; ignoring");
                         // politely_set(&mut style.merge, merge);
                     }
                     bodymovin::shapes::AnyShape::Trim(trim) => {
-                        log::error!("trims aren't implemented yet; ignoring");
+                        log::warn!("trims aren't implemented yet; ignoring");
                         // politely_set(&mut style.trim, trim);
                     }
                     bodymovin::shapes::AnyShape::RoundedCorners(rounded_corners) => {
-                        log::error!("rounded corners aren't implemented yet; ignoring");
+                        log::warn!("rounded corners aren't implemented yet; ignoring");
                         // politely_set(&mut style.rounded_corners, rounded_corners);
                     }
                     bodymovin::shapes::AnyShape::Transform(transform) => {
@@ -116,7 +116,7 @@ impl Shape {
 
                     // Hopefully we don't have to worry about this...
                     bodymovin::shapes::AnyShape::Group(group) => {
-                        log::error!("nested groups aren't implemented; ignoring");
+                        log::warn!("nested groups aren't implemented; ignoring");
                     }
                 }
                 (geometry, style)

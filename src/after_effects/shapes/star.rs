@@ -32,7 +32,7 @@ impl StarType {
             }
             bodymovin::shapes::StarType::Polygon => {
                 if inner_radius.is_some() || inner_roundness.is_some() {
-                    log::error!("star specifies an inner radius or inner roundness despite being a polygon-type star")
+                    log::warn!("star specifies an inner radius or inner roundness despite being a polygon-type star")
                 }
                 Self::Polygon
             }

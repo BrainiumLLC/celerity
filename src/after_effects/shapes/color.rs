@@ -21,7 +21,7 @@ impl GradientType {
         match ty {
             bodymovin::shapes::GradientType::Linear => {
                 if highlight_length.is_some() || highlight_angle.is_some() {
-                    log::error!(
+                    log::warn!(
                         "gradient specifies a highlight length or angle despite being linear"
                     );
                 }
@@ -73,7 +73,7 @@ impl Color {
         // color: ???,
         frame_rate: f64,
     ) -> Self {
-        log::error!("gradient colors aren't implemented yet");
+        log::warn!("gradient colors aren't implemented yet");
         Self::Gradient(Gradient {
             start_point: MaybeTrack::from_multi_dimensional(start_point, frame_rate),
             end_point: MaybeTrack::from_multi_dimensional(end_point, frame_rate),

@@ -26,7 +26,7 @@ impl FromMultiDimensional<f64> for gee::Point<f64> {
     fn from_multi_dimensional(value: &[f64]) -> Option<Self> {
         (value.len() >= 2).then(|| {
             if value.len() > 2 {
-                log::error!(
+                log::warn!(
                     "multidimensional value had more components than expected for `gee::Point`; ignoring extras"
                 );
             }
@@ -39,7 +39,7 @@ impl FromMultiDimensional<f64> for gee::Size<f64> {
     fn from_multi_dimensional(value: &[f64]) -> Option<Self> {
         (value.len() >= 2).then(|| {
             if value.len() > 2 {
-                log::error!(
+                log::warn!(
                     "multidimensional value had more components than expected for `gee::Size`; ignoring extras"
                 );
             }
@@ -52,7 +52,7 @@ impl FromMultiDimensional<f64> for gee::Vector<f64> {
     fn from_multi_dimensional(value: &[f64]) -> Option<Self> {
         (value.len() >= 2).then(|| {
             if value.len() > 2 {
-                log::error!(
+                log::warn!(
                     "multidimensional value had more components than expected for `gee::Vector`; ignoring extras"
                 );
             }
