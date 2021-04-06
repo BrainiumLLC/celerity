@@ -98,9 +98,7 @@ where
     C: en::Num,
 {
     fn distance_to(self, other: Self) -> f64 {
-        let a = self.x - other.x;
-        let b = self.y - other.y;
-        en::cast::<f64, _>(a * a + b * b).sqrt()
+        (self.to_tuple()).distance_to(other.to_tuple())
     }
 }
 
@@ -112,7 +110,7 @@ where
     where
         F: Fn(C) -> C,
     {
-        gee::Point::from_tuple((f(self.x), f(self.y)))
+        Self::from_tuple(self.to_tuple().map(f))
     }
 }
 
@@ -124,6 +122,148 @@ where
     where
         F: Fn(C, C) -> C,
     {
-        gee::Point::from_tuple((f(self.x, other.x), f(self.y, other.y)))
+        Self::from_tuple(self.to_tuple().zip_map(other.to_tuple(), f))
+    }
+}
+
+impl<C> Animatable<C> for gee::Size<C>
+where
+    C: en::Num,
+{
+    fn distance_to(self, other: Self) -> f64 {
+        (self.to_tuple()).distance_to(other.to_tuple())
+    }
+}
+
+impl<C> Map<C> for gee::Size<C>
+where
+    C: en::Num,
+{
+    fn map<F>(self, f: F) -> Self
+    where
+        F: Fn(C) -> C,
+    {
+        Self::from_tuple(self.to_tuple().map(f))
+    }
+}
+
+impl<C> ZipMap<C> for gee::Size<C>
+where
+    C: en::Num,
+{
+    fn zip_map<F>(self, other: Self, f: F) -> Self
+    where
+        F: Fn(C, C) -> C,
+    {
+        Self::from_tuple(self.to_tuple().zip_map(other.to_tuple(), f))
+    }
+}
+
+impl<C> Animatable<C> for gee::Vector<C>
+where
+    C: en::Num,
+{
+    fn distance_to(self, other: Self) -> f64 {
+        (self.to_tuple()).distance_to(other.to_tuple())
+    }
+}
+
+impl<C> Map<C> for gee::Vector<C>
+where
+    C: en::Num,
+{
+    fn map<F>(self, f: F) -> Self
+    where
+        F: Fn(C) -> C,
+    {
+        Self::from_tuple(self.to_tuple().map(f))
+    }
+}
+
+impl<C> ZipMap<C> for gee::Vector<C>
+where
+    C: en::Num,
+{
+    fn zip_map<F>(self, other: Self, f: F) -> Self
+    where
+        F: Fn(C, C) -> C,
+    {
+        Self::from_tuple(self.to_tuple().zip_map(other.to_tuple(), f))
+    }
+}
+
+impl<C> Animatable<C> for gee::Angle<C>
+where
+    C: en::Float,
+{
+    fn distance_to(self, other: Self) -> f64 {
+        // TODO: actually think about this
+        en::cast(other.normalize().radians() - self.normalize().radians())
+    }
+}
+
+impl<C> Map<C> for gee::Angle<C>
+where
+    C: en::Float,
+{
+    fn map<F>(self, f: F) -> Self
+    where
+        F: Fn(C) -> C,
+    {
+        self.map_radians(f)
+    }
+}
+
+impl<C> ZipMap<C> for gee::Angle<C>
+where
+    C: en::Float,
+{
+    fn zip_map<F>(self, other: Self, f: F) -> Self
+    where
+        F: Fn(C, C) -> C,
+    {
+        self.map(|a| f(a, other.radians()))
+    }
+}
+
+impl Animatable<f64> for rainbow::LinRgba {
+    // TODO: have someone who actually understands math check this
+    fn distance_to(self, other: Self) -> f64 {
+        let [ar, ag, ab, aa] = self.into_f32_array();
+        let [br, bg, bb, ba] = other.into_f32_array();
+        let r = ar - br;
+        let g = ag - bg;
+        let b = ab - bb;
+        let a = aa - ba;
+        en::cast::<f64, _>(r * r + g * g + b * b + a * a).sqrt()
+    }
+}
+
+impl Map<f64> for rainbow::LinRgba {
+    fn map<F>(self, f: F) -> Self
+    where
+        F: Fn(f64) -> f64,
+    {
+        Self::from_f32_array(rainbow::util::map_all(self.into_f32_array(), |c| {
+            // TODO: this is concerning
+            en::cast(f(en::cast(c)))
+        }))
+    }
+}
+
+impl ZipMap<f64> for rainbow::LinRgba {
+    fn zip_map<F>(self, other: Self, f: F) -> Self
+    where
+        F: Fn(f64, f64) -> f64,
+    {
+        let [ar, ag, ab, aa] = self.into_f32_array();
+        let [br, bg, bb, ba] = other.into_f32_array();
+        Self::from_f32(
+            // TODO: this is even more concerning
+            en::cast(f(en::cast(ar), en::cast(br))),
+            en::cast(f(en::cast(ag), en::cast(bg))),
+            en::cast(f(en::cast(ab), en::cast(bb))),
+            en::cast(f(en::cast(aa), en::cast(ba))),
+        )
     }
 }

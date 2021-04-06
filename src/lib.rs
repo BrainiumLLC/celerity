@@ -1,3 +1,4 @@
+pub mod after_effects;
 pub mod combinator;
 pub mod interval;
 mod lerp;

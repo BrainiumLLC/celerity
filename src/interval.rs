@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use crate::{
     spline::{
         bezier::{cubic_bezier, cubic_bezier_ease, fixed_bezier},
@@ -9,6 +7,7 @@ use crate::{
     Animatable, Animation, AnimationStyle, BoundedAnimation, Frame, Keyframe,
 };
 use gee::en;
+use std::marker::PhantomData;
 use time_point::Duration;
 
 #[derive(Clone, Debug)]
@@ -168,52 +167,51 @@ pub struct IntervalTrack<V: Animatable<C>, C: en::Num> {
     intervals: Vec<Interval<V, C>>,
 }
 
+impl<V: Animatable<C>, C: en::Num> Default for IntervalTrack<V, C> {
+    fn default() -> Self {
+        Self { intervals: vec![] }
+    }
+}
+
 impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
     pub fn new() -> Self {
-        Self { intervals: vec![] }
+        Self::default()
     }
 
     pub fn auto_bezier(frames: Vec<Frame<V, C>>) -> Self {
-        let mut intervals = vec![];
         let mut acc_elapsed = Duration::new(0);
+        Self::from_intervals((0..frames.len() - 1).map(|i| {
+            // Determine Catmull-Rom (cr) coordinates for current interval
+            let f0 = if i == 0 {
+                frames[0] // We may want to augment this point to influence our animation
+            } else {
+                frames[i - 1]
+            };
+            let f1 = frames[i];
+            let f2 = frames[i + 1];
+            let f3 = if i == frames.len() - 2 {
+                frames[i + 1] // We may want to augment this point to influence our animation
+            } else {
+                frames[i + 2]
+            };
 
-        for i in 0..frames.len() - 1 {
-            intervals.push({
-                // Determine Catmull-Rom (cr) coordinates for current interval
-                let f0 = if i == 0 {
-                    frames[0] // We may want to augment this point to influence our animation
-                } else {
-                    frames[i - 1]
-                };
-                let f1 = frames[i];
-                let f2 = frames[i + 1];
-                let f3 = if i == frames.len() - 2 {
-                    frames[i + 1] // We may want to augment this point to influence our animation
-                } else {
-                    frames[i + 2]
-                };
+            // Determine Bezier control points
+            let (t0, t1, t2, t3) = t_values(&f0.value, &f1.value, &f2.value, &f3.value, 0.5);
+            let (b0, b1, b2, b3) =
+                catmull_rom_to_bezier(&f0.value, &f1.value, &f2.value, &f3.value, t0, t1, t2, t3);
 
-                // Determine Bezier control points
-                let (t0, t1, t2, t3) = t_values(&f0.value, &f1.value, &f2.value, &f3.value, 0.5);
-                let (b0, b1, b2, b3) = catmull_rom_to_bezier(
-                    &f0.value, &f1.value, &f2.value, &f3.value, t0, t1, t2, t3,
-                );
-
-                let interval = Interval::new(
-                    acc_elapsed,
-                    acc_elapsed + frames[i + 1].offset,
-                    frames[i].value,
-                    frames[i + 1].value,
-                    None,
-                    Some(BezierPath::new(b1, b2)),
-                    Some(SplineMap::from_bezier(&b0, &b1, &b2, &b3)),
-                );
-                acc_elapsed = acc_elapsed + frames[i + 1].offset;
-                interval
-            });
-        }
-
-        Self::new().with_intervals(intervals)
+            let interval = Interval::new(
+                acc_elapsed,
+                acc_elapsed + frames[i + 1].offset,
+                frames[i].value,
+                frames[i + 1].value,
+                None,
+                Some(BezierPath::new(b1, b2)),
+                Some(SplineMap::from_bezier(&b0, &b1, &b2, &b3)),
+            );
+            acc_elapsed = acc_elapsed + frames[i + 1].offset;
+            interval
+        }))
     }
 
     pub fn from_keyframes(keyframes: Vec<Keyframe<V, C>>) -> Self {
@@ -277,15 +275,14 @@ impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
                     });
                 }
 
-                Self::new().with_intervals(intervals)
+                Self::from_intervals(intervals)
             }
         }
     }
 
-    // TODO
-    // pub fn from_bodymovin(data: BodyMovinData) -> Self {
-    //
-    // }
+    pub fn from_intervals(intervals: impl IntoIterator<Item = Interval<V, C>>) -> Self {
+        Self::new().with_intervals(intervals)
+    }
 
     pub fn with_interval(mut self, interval: Interval<V, C>) -> Self {
         self.add_interval(interval);
