@@ -15,4 +15,4 @@ gee = { git = "https://github.com/BrainiumLLC/gee" }
 log = "0.4.11"
 rainbow = { git = "https://github.com/BrainiumLLC/rainbow", branch = "main" }
 thiserror = "1.0.24"
-time-point = { git = "https://github.com/BrainiumLLC/time-point" }
+time-point = "0.1.1"
