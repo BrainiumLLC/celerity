@@ -1,4 +1,19 @@
-use crate::after_effects::{shapes::Color, MaybeTrack};
+use crate::after_effects::{
+    conv::FromValue,
+    shapes::{Color, GradientError, SolidError},
+    MaybeTrack,
+};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum FillError {
+    #[error("Failed to convert `opacity`: {0}")]
+    OpacityInvalid(#[from] <f64 as FromValue>::Error),
+    #[error("Failed to convert `color`: {0}")]
+    ColorInvalid(#[from] SolidError),
+    #[error("Failed to convert gradient: {0}")]
+    GradientInvalid(#[from] GradientError),
+}
 
 #[derive(Debug)]
 pub struct Fill {
@@ -7,19 +22,22 @@ pub struct Fill {
 }
 
 impl Fill {
-    pub(crate) fn from_bodymovin(fill: bodymovin::shapes::Fill, frame_rate: f64) -> Self {
-        Self {
-            opacity: MaybeTrack::from_value(fill.opacity, frame_rate),
-            color: Color::from_bodymovin_solid(fill.color, frame_rate),
-        }
+    pub(crate) fn from_bodymovin(
+        fill: bodymovin::shapes::Fill,
+        frame_rate: f64,
+    ) -> Result<Self, FillError> {
+        Ok(Self {
+            opacity: MaybeTrack::from_value(fill.opacity, frame_rate)?,
+            color: Color::from_bodymovin_solid(fill.color, frame_rate)?,
+        })
     }
 
     pub(crate) fn from_bodymovin_with_gradient(
         fill: bodymovin::shapes::GradientFill,
         frame_rate: f64,
-    ) -> Self {
-        Self {
-            opacity: MaybeTrack::from_value(fill.opacity, frame_rate),
+    ) -> Result<Self, FillError> {
+        Ok(Self {
+            opacity: MaybeTrack::from_value(fill.opacity, frame_rate)?,
             color: Color::from_bodymovin_gradient(
                 fill.start_point,
                 fill.end_point,
@@ -27,7 +45,7 @@ impl Fill {
                 fill.highlight_length,
                 fill.highlight_angle,
                 frame_rate,
-            ),
-        }
+            )?,
+        })
     }
 }

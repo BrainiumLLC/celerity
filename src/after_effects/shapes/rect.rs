@@ -1,5 +1,22 @@
-use crate::{after_effects::MaybeTrack, Animation};
+use crate::{
+    after_effects::{
+        conv::{FromMultiDimensional, FromValue},
+        MaybeTrack,
+    },
+    Animation,
+};
+use thiserror::Error;
 use time_point::Duration;
+
+#[derive(Debug, Error)]
+pub enum RectError {
+    #[error("Failed to convert `position`: {0}")]
+    PositionInvalid(#[from] <gee::Point<f64> as FromMultiDimensional<f64>>::Error),
+    #[error("Failed to convert `size`: {0}")]
+    SizeInvalid(#[from] <gee::Size<f64> as FromMultiDimensional<f64>>::Error),
+    #[error("Failed to convert `rounded_corners`: {0}")]
+    RoundedCornersInvalid(#[from] <f64 as FromValue>::Error),
+}
 
 #[derive(Debug)]
 pub struct Rect {
@@ -10,13 +27,17 @@ pub struct Rect {
 }
 
 impl Rect {
-    pub(crate) fn from_bodymovin(rect: bodymovin::shapes::Rect, frame_rate: f64) -> Self {
-        Self {
+    pub(crate) fn from_bodymovin(
+        rect: bodymovin::shapes::Rect,
+        frame_rate: f64,
+    ) -> Result<Self, RectError> {
+        Ok(Self {
             direction: rect.direction,
-            position: MaybeTrack::from_multi_dimensional(rect.position, frame_rate),
-            size: MaybeTrack::from_multi_dimensional(rect.size, frame_rate),
-            rounded_corners: MaybeTrack::from_value(rect.rounded_corners, frame_rate),
-        }
+            position: MaybeTrack::from_multi_dimensional(rect.position, frame_rate)?,
+            size: MaybeTrack::from_multi_dimensional(rect.size, frame_rate)?,
+            rounded_corners: MaybeTrack::from_value(rect.rounded_corners, frame_rate)
+                .map_err(RectError::RoundedCornersInvalid)?,
+        })
     }
 
     pub fn sample_rect(&self, elapsed: Duration) -> gee::Rect<f64> {

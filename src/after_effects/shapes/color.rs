@@ -1,5 +1,40 @@
-use crate::{after_effects::MaybeTrack, Animation as _};
+use crate::{
+    after_effects::{
+        conv::{FromMultiDimensional, FromValue},
+        MaybeTrack,
+    },
+    Animation as _,
+};
+use thiserror::Error;
 use time_point::Duration;
+
+#[derive(Debug, Error)]
+pub enum SolidError {
+    #[error("Failed to convert `color`: {0}")]
+    ColorInvalid(#[from] <rainbow::LinRgba as FromMultiDimensional<f64>>::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum GradientTypeError {
+    #[error("Failed to convert `highlight_length`: {0}")]
+    HighlightLengthInvalid(#[from] <f64 as FromValue>::Error),
+    #[error("Failed to convert `highlight_angle`: {0}")]
+    HighlightAngleInvalid(#[from] <gee::Angle<f64> as FromValue<f64>>::Error),
+    #[error(
+        "Missing `highlight_length` or `highlight_angle` despite being a radial-type gradient"
+    )]
+    HighlightFieldsMissing,
+}
+
+#[derive(Debug, Error)]
+pub enum GradientError {
+    #[error("Failed to convert `start_point`: {0}")]
+    StartPointInvalid(#[source] <gee::Point<f64> as FromMultiDimensional<f64>>::Error),
+    #[error("Failed to convert `end_point`: {0}")]
+    EndPointInvalid(#[source] <gee::Point<f64> as FromMultiDimensional<f64>>::Error),
+    #[error("Failed to classify gradient: {0}")]
+    TyInvalid(#[from] GradientTypeError),
+}
 
 #[derive(Debug)]
 pub enum GradientType {
@@ -17,7 +52,7 @@ impl GradientType {
         highlight_length: Option<bodymovin::properties::EitherValue>,
         highlight_angle: Option<bodymovin::properties::EitherValue>,
         frame_rate: f64,
-    ) -> Self {
+    ) -> Result<Self, GradientTypeError> {
         match ty {
             bodymovin::shapes::GradientType::Linear => {
                 if highlight_length.is_some() || highlight_angle.is_some() {
@@ -25,20 +60,17 @@ impl GradientType {
                         "gradient specifies a highlight length or angle despite being linear"
                     );
                 }
-                Self::Linear
+                Ok(Self::Linear)
             }
-            bodymovin::shapes::GradientType::Radial => {
-                // TODO: don't unwrap
-                highlight_length
-                    .zip(highlight_angle)
-                    .map(|(highlight_length, highlight_angle)| Self::Radial {
-                        highlight_length: MaybeTrack::from_value(highlight_length, frame_rate),
-                        highlight_angle: MaybeTrack::from_value(highlight_angle, frame_rate),
+            bodymovin::shapes::GradientType::Radial => highlight_length
+                .zip(highlight_angle)
+                .ok_or_else(|| GradientTypeError::HighlightFieldsMissing)
+                .and_then(|(highlight_length, highlight_angle)| {
+                    Ok(Self::Radial {
+                        highlight_length: MaybeTrack::from_value(highlight_length, frame_rate)?,
+                        highlight_angle: MaybeTrack::from_value(highlight_angle, frame_rate)?,
                     })
-                    .expect(
-                        "gradient didn't specify a highlight length or angle despite being radial",
-                    )
-            }
+                }),
         }
     }
 }
@@ -60,8 +92,10 @@ impl Color {
     pub(crate) fn from_bodymovin_solid(
         color: bodymovin::properties::EitherMultiDimensional,
         frame_rate: f64,
-    ) -> Self {
-        Self::Solid(MaybeTrack::from_multi_dimensional(color, frame_rate))
+    ) -> Result<Self, SolidError> {
+        MaybeTrack::from_multi_dimensional(color, frame_rate)
+            .map(Self::Solid)
+            .map_err(SolidError::from)
     }
 
     pub(crate) fn from_bodymovin_gradient(
@@ -72,13 +106,15 @@ impl Color {
         highlight_angle: Option<bodymovin::properties::EitherValue>,
         // color: ???,
         frame_rate: f64,
-    ) -> Self {
+    ) -> Result<Self, GradientError> {
         log::warn!("gradient colors aren't implemented yet");
-        Self::Gradient(Gradient {
-            start_point: MaybeTrack::from_multi_dimensional(start_point, frame_rate),
-            end_point: MaybeTrack::from_multi_dimensional(end_point, frame_rate),
-            ty: GradientType::from_bodymovin(ty, highlight_length, highlight_angle, frame_rate),
-        })
+        Ok(Self::Gradient(Gradient {
+            start_point: MaybeTrack::from_multi_dimensional(start_point, frame_rate)
+                .map_err(GradientError::StartPointInvalid)?,
+            end_point: MaybeTrack::from_multi_dimensional(end_point, frame_rate)
+                .map_err(GradientError::EndPointInvalid)?,
+            ty: GradientType::from_bodymovin(ty, highlight_length, highlight_angle, frame_rate)?,
+        }))
     }
 
     pub fn sample_color(&self, elapsed: Duration) -> Option<rainbow::LinRgba> {

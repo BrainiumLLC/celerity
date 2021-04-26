@@ -5,19 +5,16 @@ pub mod shapes;
 
 use self::layers::Layer;
 pub use self::maybe_track::MaybeTrack;
-use crate::interval::BezierEase;
 pub use bodymovin;
 use std::{fmt::Debug, path::Path};
+use thiserror::Error;
 
-impl From<bodymovin::properties::Bezier1d> for BezierEase {
-    fn from(bezier: bodymovin::properties::Bezier1d) -> Self {
-        Self {
-            ox: bezier.out_value.x,
-            oy: bezier.out_value.y,
-            ix: bezier.in_value.x,
-            iy: bezier.in_value.y,
-        }
-    }
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Failed to load exported animation: {0}")]
+    ParseFailed(#[from] bodymovin::Error),
+    #[error(transparent)]
+    LayerInvalid(#[from] layers::LayerError),
 }
 
 #[derive(Debug)]
@@ -27,8 +24,10 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn load(path: impl AsRef<Path>) -> Result<Self, bodymovin::Error> {
-        bodymovin::Bodymovin::load(path).map(Self::from_bodymovin)
+    pub fn load(path: impl AsRef<Path>) -> Result<Self, Error> {
+        bodymovin::Bodymovin::load(path)
+            .map_err(Error::from)
+            .and_then(Self::from_bodymovin)
     }
 
     pub fn from_bodymovin(
@@ -39,13 +38,15 @@ impl Scene {
             layers,
             ..
         }: bodymovin::Bodymovin,
-    ) -> Self {
-        Self {
-            size: gee::Size::new(width, height),
-            layers: layers
-                .into_iter()
-                .map(|layer| Layer::from_bodymovin(layer, frame_rate))
-                .collect(),
-        }
+    ) -> Result<Self, Error> {
+        layers
+            .into_iter()
+            .map(|layer| Layer::from_bodymovin(layer, frame_rate))
+            .collect::<Result<_, _>>()
+            .map(|layers| Self {
+                size: gee::Size::new(width, height),
+                layers,
+            })
+            .map_err(Error::from)
     }
 }
