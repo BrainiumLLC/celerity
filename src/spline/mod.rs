@@ -1,12 +1,9 @@
 pub mod bezier;
 pub mod catmull_rom;
 
-use gee::en;
-
-use self::bezier::dt_cubic_bezier;
-use self::catmull_rom::catmull_rom_value;
-use crate::lerp::linear_value;
-use crate::Animatable;
+use self::{bezier::dt_cubic_bezier, catmull_rom::catmull_rom_value};
+use crate::{lerp::linear_value, Animatable};
+use gee::en::num_traits::Zero as _;
 
 // Spline polyline subdivision
 const SPLINE_SUBDIVISION: usize = 64;
@@ -76,7 +73,7 @@ impl SplineMap {
     // Make a spline map to map "spline time" 0..1 to arc length 0..d.
     // Integrates with Euler's rule.
 
-    pub fn from_spline<V: Animatable<C>, C: en::Num, F: Fn(f64) -> V>(f: F) -> SplineMap {
+    pub fn from_spline<V: Animatable, F: Fn(f64) -> V>(f: F) -> SplineMap {
         let mut steps = Vec::new();
         let mut length: f64 = 0.0;
         let mut point = f(0.0);
@@ -108,10 +105,10 @@ impl SplineMap {
     // Uses analytic derivatives and simpson's rule for more accurate integration.
     // (only makes a difference for strongly cusped curves)
 
-    pub fn from_bezier<V: Animatable<C>, C: en::Num>(b0: &V, b1: &V, b2: &V, b3: &V) -> SplineMap {
+    pub fn from_bezier<V: Animatable>(b0: &V, b1: &V, b2: &V, b3: &V) -> SplineMap {
         let mut steps = Vec::new();
         let mut length: f64 = 0.0;
-        let zero = b0.map(|_| C::zero());
+        let zero = b0.map(|_| V::Component::zero());
 
         // Integrate arc length between t = a..b
         let integrate = |a, b| {
@@ -157,6 +154,7 @@ impl SplineMap {
 mod tests {
     use self::bezier::cubic_bezier;
     use super::*;
+    use gee::en;
 
     const MATCH_TOLERANCE: f64 = 1e-3;
 
@@ -164,7 +162,7 @@ mod tests {
         lhs.is_finite() && rhs.is_finite() && ((lhs - epsilon)..(lhs + epsilon)).contains(&rhs)
     }
 
-    pub fn integrate_length<V: Animatable<C>, C: en::Num, F: Fn(f64) -> V>(
+    pub fn integrate_length<V: Animatable, F: Fn(f64) -> V>(
         from: f64,
         to: f64,
         divide: usize,

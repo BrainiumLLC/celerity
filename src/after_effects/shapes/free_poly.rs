@@ -6,7 +6,7 @@ pub enum FreePolyError {}
 #[derive(Debug)]
 pub struct FreePoly {
     pub direction: f64,
-    // pub vertices: MaybeTrack<FreePolyProp, f64>,
+    // pub vertices: MaybeTrack<FreePolyProp>,
 }
 
 impl FreePoly {

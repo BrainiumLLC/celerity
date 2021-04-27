@@ -8,7 +8,7 @@ const CENTRIPETAL_ALPHA: f64 = 0.5;
 
 const TANGENT_EPSILON: f64 = 1e-5;
 
-pub fn catmull_rom_value<V: Animatable<C>, C: en::Num>(
+pub fn catmull_rom_value<V: Animatable>(
     p0: &V,
     p1: &V,
     p2: &V,
@@ -103,7 +103,7 @@ pub fn catmull_rom_value<V: Animatable<C>, C: en::Num>(
 // Convert non-uniform catmull rom to equivalent bezier spline
 //
 // Uses numerical approximation
-pub fn catmull_rom_to_bezier<V: Animatable<C>, C: en::Num>(
+pub fn catmull_rom_to_bezier<V: Animatable>(
     p0: &V,
     p1: &V,
     p2: &V,
@@ -127,10 +127,10 @@ pub fn catmull_rom_to_bezier<V: Animatable<C>, C: en::Num>(
     // Bezier has factor of 3, central difference has factor of 2
     let d1 = b1
         .zip_map(a1, |b, a| b - a)
-        .map(|d| d * en::cast::<C, _>(1.0 / (TANGENT_EPSILON * 6.0)));
+        .map(|d| d * en::cast::<V::Component, _>(1.0 / (TANGENT_EPSILON * 6.0)));
     let d2 = a2
         .zip_map(b2, |b, a| b - a)
-        .map(|d| d * en::cast::<C, _>(1.0 / (TANGENT_EPSILON * 6.0)));
+        .map(|d| d * en::cast::<V::Component, _>(1.0 / (TANGENT_EPSILON * 6.0)));
 
     (
         *p1,
@@ -144,13 +144,7 @@ pub fn catmull_rom_to_bezier<V: Animatable<C>, C: en::Num>(
 // alpha = 0.0: Uniform spline
 // alpha = 0.5: Centripetal spline
 // alpha = 1.0: Chordal spline
-pub fn t_values<V: Animatable<C>, C: en::Num>(
-    p0: &V,
-    p1: &V,
-    p2: &V,
-    p3: &V,
-    alpha: f64,
-) -> (f64, f64, f64, f64) {
+pub fn t_values<V: Animatable>(p0: &V, p1: &V, p2: &V, p3: &V, alpha: f64) -> (f64, f64, f64, f64) {
     let t1 = f64::powf(p0.distance_to(*p1), alpha);
     let t2 = f64::powf(p1.distance_to(*p2), alpha) + t1;
     let t3 = f64::powf(p2.distance_to(*p3), alpha) + t2;
@@ -158,13 +152,7 @@ pub fn t_values<V: Animatable<C>, C: en::Num>(
     (0.0, t1, t2, t3)
 }
 
-pub fn centripetal_catmull_rom<V: Animatable<C>, C: en::Num>(
-    p0: &V,
-    p1: &V,
-    p2: &V,
-    p3: &V,
-    t: f64,
-) -> V {
+pub fn centripetal_catmull_rom<V: Animatable>(p0: &V, p1: &V, p2: &V, p3: &V, t: f64) -> V {
     let (t0, t1, t2, t3) = t_values(p0, p1, p2, p3, CENTRIPETAL_ALPHA);
 
     // Our input t value ranges from 0-1, and needs to be scaled to match the spline's knots
@@ -196,7 +184,7 @@ mod tests {
         let t3: f64 = 0.2;
         let t4: f64 = 0.3;
 
-        let bezier = catmull_rom_to_bezier::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
+        let bezier = catmull_rom_to_bezier(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
         let b1 = bezier.0;
         let b2 = bezier.1;
         let b3 = bezier.2;
@@ -204,12 +192,11 @@ mod tests {
 
         for i in 0..=TEST_STEPS {
             let d = (i as f64) / (TEST_STEPS as f64);
-            let cr =
-                catmull_rom_value::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
-            let bz = cubic_bezier::<_, f64>(&b1, &b2, &b3, &b4, d);
+            let cr = catmull_rom_value(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
+            let bz = cubic_bezier(&b1, &b2, &b3, &b4, d);
 
             assert!(
-                Animatable::<f64>::distance_to(cr, bz) < TEST_EPSILON,
+                Animatable::distance_to(cr, bz) < TEST_EPSILON,
                 "bezier does not match catmull rom at {}: {},{} != {},{}",
                 d,
                 cr.0,
@@ -232,7 +219,7 @@ mod tests {
         let t3: f64 = 0.2;
         let t4: f64 = 0.3;
 
-        let bezier = catmull_rom_to_bezier::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
+        let bezier = catmull_rom_to_bezier(&p1, &p2, &p3, &p4, t1, t2, t3, t4);
         let b1 = bezier.0;
         let b2 = bezier.1;
         let b3 = bezier.2;
@@ -240,12 +227,11 @@ mod tests {
 
         for i in 0..=TEST_STEPS {
             let d = (i as f64) / (TEST_STEPS as f64);
-            let cr =
-                catmull_rom_value::<_, f64>(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
-            let bz = cubic_bezier::<_, f64>(&b1, &b2, &b3, &b4, d);
+            let cr = catmull_rom_value(&p1, &p2, &p3, &p4, t1, t2, t3, t4, t2 + (t3 - t2) * d);
+            let bz = cubic_bezier(&b1, &b2, &b3, &b4, d);
 
             assert!(
-                Animatable::<f64>::distance_to(cr, bz) < TEST_EPSILON,
+                Animatable::distance_to(cr, bz) < TEST_EPSILON,
                 "bezier does not match catmull rom at {}: {},{} != {},{}",
                 d,
                 cr.0,

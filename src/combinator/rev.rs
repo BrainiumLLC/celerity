@@ -1,23 +1,20 @@
 use crate::{util::ZipMap as _, Animatable, Animation, BoundedAnimation};
-use gee::en;
 use std::marker::PhantomData;
 use time_point::Duration;
 
-pub struct Rev<A, V, C>
+pub struct Rev<A, V>
 where
-    A: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    V: Animatable,
 {
     anim: A,
-    _marker: PhantomData<(V, C)>,
+    _marker: PhantomData<V>,
 }
 
-impl<A, V, C> Animation<V, C> for Rev<A, V, C>
+impl<A, V> Animation<V> for Rev<A, V>
 where
-    A: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
         self.anim.sample(
@@ -27,22 +24,20 @@ where
     }
 }
 
-impl<A, V, C> BoundedAnimation<V, C> for Rev<A, V, C>
+impl<A, V> BoundedAnimation<V> for Rev<A, V>
 where
-    A: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    V: Animatable,
 {
     fn duration(&self) -> Duration {
         self.anim.duration()
     }
 }
 
-impl<A, V, C> Rev<A, V, C>
+impl<A, V> Rev<A, V>
 where
-    A: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    V: Animatable,
 {
     pub fn new(anim: A) -> Self {
         Self {

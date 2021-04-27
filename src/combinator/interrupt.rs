@@ -1,28 +1,25 @@
 use crate::{spline::bezier::cubic_bezier_ease, Animatable, Animation, BoundedAnimation};
 use gee::en;
-use std::marker::PhantomData;
 use time_point::Duration;
 
 const SAMPLE_DELTA: f64 = 1e-5;
 
 #[derive(Debug)]
-pub struct Interrupt<A, V, C>
+pub struct Interrupt<A, V>
 where
-    A: Animation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: Animation<V>,
+    V: Animatable,
 {
-    a: Linear<V, C>,
+    a: Linear<V>,
     b: A,
     interrupt_t: Duration,
     transition_t: Duration,
 }
 
-impl<A, V, C> Animation<V, C> for Interrupt<A, V, C>
+impl<A, V> Animation<V> for Interrupt<A, V>
 where
-    A: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
         // relative change from interrupt_v for each animation
@@ -36,7 +33,7 @@ where
 
         // blend a_contribution and b_contribution
         let blended_contributions = a_contribution.zip_map(b_contribution, |a, b| {
-            let ac = a * en::cast::<C, _>(1.0 - ease);
+            let ac = a * en::cast::<V::Component, _>(1.0 - ease);
             let bc = b;
             ac + bc
         });
@@ -46,22 +43,20 @@ where
     }
 }
 
-impl<A, V, C> BoundedAnimation<V, C> for Interrupt<A, V, C>
+impl<A, V> BoundedAnimation<V> for Interrupt<A, V>
 where
-    A: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    V: Animatable,
 {
     fn duration(&self) -> Duration {
         self.interrupt_t + self.b.duration()
     }
 }
 
-impl<A, V, C> Interrupt<A, V, C>
+impl<A, V> Interrupt<A, V>
 where
-    A: Animation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: Animation<V>,
+    V: Animatable,
 {
     pub fn new(a: A, b: A, interrupt_t: Duration, transition_t: Duration) -> Self {
         let interrupt_v = a.sample(interrupt_t);
@@ -72,7 +67,7 @@ where
                 a.sample(interrupt_t - Duration::from_secs_f64(SAMPLE_DELTA)),
                 |n, p| n - p,
             )
-            .map(|a| a * en::cast::<C, _>(0.5 / SAMPLE_DELTA));
+            .map(|a| a * en::cast::<V::Component, _>(0.5 / SAMPLE_DELTA));
 
         let linear = Linear::new(interrupt_v, velocity);
 
@@ -85,7 +80,7 @@ where
     }
 
     pub fn with_box(
-        a: &Box<dyn Animation<V, C>>,
+        a: &Box<dyn Animation<V>>,
         b: A,
         interrupt_t: Duration,
         transition_t: Duration,
@@ -98,7 +93,7 @@ where
                 a.sample(interrupt_t - Duration::from_secs_f64(SAMPLE_DELTA)),
                 |n, p| n - p,
             )
-            .map(|a| a * en::cast::<C, _>(0.5 / SAMPLE_DELTA));
+            .map(|a| a * en::cast::<V::Component, _>(0.5 / SAMPLE_DELTA));
 
         let linear = Linear::new(interrupt_v, velocity);
 
@@ -113,34 +108,27 @@ where
 
 // Sampleable Linear animation from a point w/ a vector
 #[derive(Debug)]
-pub struct Linear<V, C> {
+pub struct Linear<V> {
     value: V,
     dt_value: V,
-    _marker: PhantomData<C>,
 }
 
-impl<V, C> Linear<V, C>
+impl<V> Linear<V>
 where
-    V: Animatable<C>,
-    C: en::Num,
+    V: Animatable,
 {
     fn new(value: V, dt_value: V) -> Self {
-        Self {
-            value,
-            dt_value,
-            _marker: PhantomData,
-        }
+        Self { value, dt_value }
     }
 }
 
-impl<V, C> Animation<V, C> for Linear<V, C>
+impl<V> Animation<V> for Linear<V>
 where
-    V: Animatable<C>,
-    C: en::Num,
+    V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
         self.value.zip_map(self.dt_value, |v, dvdt| {
-            v + dvdt * en::cast::<C, _>(elapsed.as_secs_f64())
+            v + dvdt * en::cast::<V::Component, _>(elapsed.as_secs_f64())
         })
     }
 }

@@ -11,7 +11,7 @@ use time_point::Duration;
 #[derive(Debug, Error)]
 pub enum SolidError {
     #[error("Failed to convert `color`: {0}")]
-    ColorInvalid(#[from] <rainbow::LinRgba as FromMultiDimensional<f64>>::Error),
+    ColorInvalid(#[from] <rainbow::LinRgba as FromMultiDimensional>::Error),
 }
 
 #[derive(Debug, Error)]
@@ -19,7 +19,7 @@ pub enum GradientTypeError {
     #[error("Failed to convert `highlight_length`: {0}")]
     HighlightLengthInvalid(#[from] <f64 as FromValue>::Error),
     #[error("Failed to convert `highlight_angle`: {0}")]
-    HighlightAngleInvalid(#[from] <gee::Angle<f64> as FromValue<f64>>::Error),
+    HighlightAngleInvalid(#[from] <gee::Angle<f64> as FromValue>::Error),
     #[error(
         "Missing `highlight_length` or `highlight_angle` despite being a radial-type gradient"
     )]
@@ -29,9 +29,9 @@ pub enum GradientTypeError {
 #[derive(Debug, Error)]
 pub enum GradientError {
     #[error("Failed to convert `start_point`: {0}")]
-    StartPointInvalid(#[source] <gee::Point<f64> as FromMultiDimensional<f64>>::Error),
+    StartPointInvalid(#[source] <gee::Point<f64> as FromMultiDimensional>::Error),
     #[error("Failed to convert `end_point`: {0}")]
-    EndPointInvalid(#[source] <gee::Point<f64> as FromMultiDimensional<f64>>::Error),
+    EndPointInvalid(#[source] <gee::Point<f64> as FromMultiDimensional>::Error),
     #[error("Failed to classify gradient: {0}")]
     TyInvalid(#[from] GradientTypeError),
 }
@@ -42,7 +42,7 @@ pub enum GradientType {
     // TODO: upstream this nicenes
     Radial {
         highlight_length: MaybeTrack<f64>,
-        highlight_angle: MaybeTrack<gee::Angle<f64>, f64>,
+        highlight_angle: MaybeTrack<gee::Angle<f64>>,
     },
 }
 
@@ -77,14 +77,14 @@ impl GradientType {
 
 #[derive(Debug)]
 pub struct Gradient {
-    pub start_point: MaybeTrack<gee::Point<f64>, f64>,
-    pub end_point: MaybeTrack<gee::Point<f64>, f64>,
+    pub start_point: MaybeTrack<gee::Point<f64>>,
+    pub end_point: MaybeTrack<gee::Point<f64>>,
     pub ty: GradientType,
 }
 
 #[derive(Debug)]
 pub enum Color {
-    Solid(MaybeTrack<rainbow::LinRgba, f64>),
+    Solid(MaybeTrack<rainbow::LinRgba>),
     Gradient(Gradient),
 }
 

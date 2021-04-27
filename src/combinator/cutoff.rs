@@ -1,24 +1,21 @@
 use crate::{Animatable, Animation, BoundedAnimation};
-use gee::en;
 use std::marker::PhantomData;
 use time_point::Duration;
 
-pub struct Cutoff<A, V, C>
+pub struct Cutoff<A, V>
 where
-    A: Animation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: Animation<V>,
+    V: Animatable,
 {
     anim: A,
     cutoff: Duration,
-    _marker: PhantomData<(V, C)>,
+    _marker: PhantomData<V>,
 }
 
-impl<A, V, C> Animation<V, C> for Cutoff<A, V, C>
+impl<A, V> Animation<V> for Cutoff<A, V>
 where
-    A: Animation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: Animation<V>,
+    V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
         self.anim.sample(if elapsed < self.cutoff {
@@ -29,22 +26,20 @@ where
     }
 }
 
-impl<A, V, C> BoundedAnimation<V, C> for Cutoff<A, V, C>
+impl<A, V> BoundedAnimation<V> for Cutoff<A, V>
 where
-    A: Animation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: Animation<V>,
+    V: Animatable,
 {
     fn duration(&self) -> Duration {
         self.cutoff
     }
 }
 
-impl<A, V, C> Cutoff<A, V, C>
+impl<A, V> Cutoff<A, V>
 where
-    A: Animation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: Animation<V>,
+    V: Animatable,
 {
     pub fn new(anim: A, cutoff: Duration) -> Self {
         Self {

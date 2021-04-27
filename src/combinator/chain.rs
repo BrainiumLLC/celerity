@@ -1,26 +1,23 @@
 use crate::{Animatable, Animation, BoundedAnimation};
-use gee::en;
 use std::marker::PhantomData;
 use time_point::Duration;
 
-pub struct Chain<A, B, V, C>
+pub struct Chain<A, B, V>
 where
-    A: BoundedAnimation<V, C>,
-    B: Animation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    B: Animation<V>,
+    V: Animatable,
 {
     a: A,
     b: B,
-    _marker: PhantomData<(V, C)>,
+    _marker: PhantomData<V>,
 }
 
-impl<A, B, V, C> Animation<V, C> for Chain<A, B, V, C>
+impl<A, B, V> Animation<V> for Chain<A, B, V>
 where
-    A: BoundedAnimation<V, C>,
-    B: Animation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    B: Animation<V>,
+    V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
         let inflection = self.a.duration();
@@ -32,24 +29,22 @@ where
     }
 }
 
-impl<A, B, V, C> BoundedAnimation<V, C> for Chain<A, B, V, C>
+impl<A, B, V> BoundedAnimation<V> for Chain<A, B, V>
 where
-    A: BoundedAnimation<V, C>,
-    B: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    B: BoundedAnimation<V>,
+    V: Animatable,
 {
     fn duration(&self) -> Duration {
         self.a.duration() + self.b.duration()
     }
 }
 
-impl<A, B, V, C> Chain<A, B, V, C>
+impl<A, B, V> Chain<A, B, V>
 where
-    A: BoundedAnimation<V, C>,
-    B: Animation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    B: Animation<V>,
+    V: Animatable,
 {
     pub fn new(a: A, b: B) -> Self {
         Self {

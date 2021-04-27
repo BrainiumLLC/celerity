@@ -6,39 +6,36 @@ use crate::{
     },
     Animatable, Animation, AnimationStyle, BoundedAnimation, Frame, Keyframe,
 };
-use gee::en;
-use std::marker::PhantomData;
 use time_point::Duration;
 
 #[derive(Clone, Debug)]
-pub struct Interval<V: Animatable<C>, C: en::Num> {
+pub struct Interval<V: Animatable> {
     pub start: Duration,
     pub end: Duration,
     pub from: V,
     pub to: V,
     pub ease: Option<BezierEase>,
-    pub path: Option<BezierPath<V, C>>,
+    pub path: Option<BezierPath<V>>,
     pub metric: Option<SplineMap>,
 }
 
 #[derive(Clone, Debug)]
-pub struct InspectInterval<V: Animatable<C>, C: en::Num> {
+pub struct InspectInterval<V: Animatable> {
     pub start: Duration,
     pub end: Duration,
     pub ease: Vec<(f64, f64)>,
     pub path: Vec<(f64, V)>,
     pub metric: Option<Vec<(f64, f64)>>,
-    _marker: PhantomData<C>,
 }
 
-impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
+impl<V: Animatable> Interval<V> {
     pub fn new(
         start: Duration,
         end: Duration,
         from: V,
         to: V,
         ease: Option<BezierEase>,
-        path: Option<BezierPath<V, C>>,
+        path: Option<BezierPath<V>>,
         metric: Option<SplineMap>,
     ) -> Self {
         Self {
@@ -52,7 +49,7 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
         }
     }
 
-    pub fn eased(a: Frame<V, C>, b: Frame<V, C>, ox: f64, oy: f64, ix: f64, iy: f64) -> Self {
+    pub fn eased(a: Frame<V>, b: Frame<V>, ox: f64, oy: f64, ix: f64, iy: f64) -> Self {
         Self::new(
             a.offset,
             b.offset,
@@ -64,7 +61,7 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
         )
     }
 
-    pub fn transition(a: Frame<V, C>, b: Frame<V, C>) -> Self {
+    pub fn transition(a: Frame<V>, b: Frame<V>) -> Self {
         Self::new(
             a.offset,
             b.offset,
@@ -76,7 +73,7 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
         )
     }
 
-    pub fn linear(a: Frame<V, C>, b: Frame<V, C>) -> Self {
+    pub fn linear(a: Frame<V>, b: Frame<V>) -> Self {
         Self::new(a.offset, b.offset, a.value, b.value, None, None, None)
     }
 
@@ -102,7 +99,7 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
     }
 
     #[allow(dead_code)]
-    pub fn inspect(&self, detail: usize) -> InspectInterval<V, C> {
+    pub fn inspect(&self, detail: usize) -> InspectInterval<V> {
         let sample_ease = |ease: &BezierEase| {
             (0..detail)
                 .map(|i| {
@@ -124,12 +121,11 @@ impl<V: Animatable<C>, C: en::Num> Interval<V, C> {
                 None => vec![(0.0, 0.0), (1.0, 1.0)],
             },
             metric: self.metric.as_ref().map(|metric| metric.steps.to_vec()),
-            _marker: PhantomData,
         }
     }
 }
 
-impl<V: Animatable<C>, C: en::Num> Animation<V, C> for Interval<V, C> {
+impl<V: Animatable> Animation<V> for Interval<V> {
     fn sample(&self, elapsed: Duration) -> V {
         // Apply temporal easing (or not)
         let percent_elapsed = self.percent_elapsed(elapsed);
@@ -156,29 +152,29 @@ impl<V: Animatable<C>, C: en::Num> Animation<V, C> for Interval<V, C> {
     }
 }
 
-impl<V: Animatable<C>, C: en::Num> BoundedAnimation<V, C> for Interval<V, C> {
+impl<V: Animatable> BoundedAnimation<V> for Interval<V> {
     fn duration(&self) -> Duration {
         self.end - self.start
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct IntervalTrack<V: Animatable<C>, C: en::Num> {
-    intervals: Vec<Interval<V, C>>,
+pub struct IntervalTrack<V: Animatable> {
+    intervals: Vec<Interval<V>>,
 }
 
-impl<V: Animatable<C>, C: en::Num> Default for IntervalTrack<V, C> {
+impl<V: Animatable> Default for IntervalTrack<V> {
     fn default() -> Self {
         Self { intervals: vec![] }
     }
 }
 
-impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
+impl<V: Animatable> IntervalTrack<V> {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn auto_bezier(frames: Vec<Frame<V, C>>) -> Self {
+    pub fn auto_bezier(frames: Vec<Frame<V>>) -> Self {
         let mut acc_elapsed = Duration::new(0);
         Self::from_intervals((0..frames.len() - 1).map(|i| {
             // Determine Catmull-Rom (cr) coordinates for current interval
@@ -214,7 +210,7 @@ impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
         }))
     }
 
-    pub fn from_keyframes(keyframes: Vec<Keyframe<V, C>>) -> Self {
+    pub fn from_keyframes(keyframes: Vec<Keyframe<V>>) -> Self {
         match keyframes.len() {
             0 => Self::new(),
             1 => {
@@ -280,36 +276,33 @@ impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
         }
     }
 
-    pub fn from_intervals(intervals: impl IntoIterator<Item = Interval<V, C>>) -> Self {
+    pub fn from_intervals(intervals: impl IntoIterator<Item = Interval<V>>) -> Self {
         Self::new().with_intervals(intervals)
     }
 
-    pub fn with_interval(mut self, interval: Interval<V, C>) -> Self {
+    pub fn with_interval(mut self, interval: Interval<V>) -> Self {
         self.add_interval(interval);
         self
     }
 
-    pub fn with_intervals(mut self, intervals: impl IntoIterator<Item = Interval<V, C>>) -> Self {
+    pub fn with_intervals(mut self, intervals: impl IntoIterator<Item = Interval<V>>) -> Self {
         self.add_intervals(intervals);
         self
     }
 
-    pub fn add_interval(&mut self, interval: Interval<V, C>) -> &mut Self {
+    pub fn add_interval(&mut self, interval: Interval<V>) -> &mut Self {
         self.intervals.push(interval);
         self
     }
 
-    pub fn add_intervals(
-        &mut self,
-        intervals: impl IntoIterator<Item = Interval<V, C>>,
-    ) -> &mut Self {
+    pub fn add_intervals(&mut self, intervals: impl IntoIterator<Item = Interval<V>>) -> &mut Self {
         for interval in intervals {
             self.add_interval(interval);
         }
         self
     }
 
-    pub fn current_interval(&self, elapsed: &Duration) -> Option<&Interval<V, C>> {
+    pub fn current_interval(&self, elapsed: &Duration) -> Option<&Interval<V>> {
         self.intervals
             .iter()
             .find(|interval| interval.end > *elapsed)
@@ -317,13 +310,13 @@ impl<V: Animatable<C>, C: en::Num> IntervalTrack<V, C> {
     }
 }
 
-impl<V: Animatable<C>, C: en::Num> Animation<V, C> for IntervalTrack<V, C> {
+impl<V: Animatable> Animation<V> for IntervalTrack<V> {
     fn sample(&self, elapsed: Duration) -> V {
         self.current_interval(&elapsed).unwrap().sample(elapsed)
     }
 }
 
-impl<V: Animatable<C>, C: en::Num> BoundedAnimation<V, C> for IntervalTrack<V, C> {
+impl<V: Animatable> BoundedAnimation<V> for IntervalTrack<V> {
     fn duration(&self) -> Duration {
         self.intervals
             .last()
@@ -361,19 +354,14 @@ impl BezierEase {
 // These are in absolute coordinates,
 // i.e. (from, b1, b2, to) is a bezier.
 #[derive(Clone, Debug)]
-pub struct BezierPath<V: Animatable<C>, C: en::Num> {
+pub struct BezierPath<V: Animatable> {
     pub b1: V,
     pub b2: V,
-    _marker: PhantomData<C>,
 }
 
-impl<V: Animatable<C>, C: en::Num> BezierPath<V, C> {
+impl<V: Animatable> BezierPath<V> {
     pub fn new(b1: V, b2: V) -> Self {
-        Self {
-            b1,
-            b2,
-            _marker: PhantomData,
-        }
+        Self { b1, b2 }
     }
 
     pub fn position(&self, b0: &V, b3: &V, t: f64) -> V {
@@ -384,6 +372,7 @@ impl<V: Animatable<C>, C: en::Num> BezierPath<V, C> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gee::en;
 
     const TOLERANCE: f64 = 1e-4;
     const TOLERANCE_LOOSE: f64 = 1e-3;
@@ -552,11 +541,7 @@ mod tests {
             from,
             to,
             ease: None,
-            path: Some(BezierPath {
-                b1,
-                b2,
-                _marker: PhantomData,
-            }),
+            path: Some(BezierPath { b1, b2 }),
             metric: Some(spline_map),
         };
 
@@ -611,11 +596,7 @@ mod tests {
                 ix: 0.5,
                 iy: 1.0,
             }),
-            path: Some(BezierPath {
-                b1,
-                b2,
-                _marker: PhantomData,
-            }),
+            path: Some(BezierPath { b1, b2 }),
             metric: Some(spline_map),
         };
 
@@ -677,11 +658,7 @@ mod tests {
                 ix: 0.5,
                 iy: 1.0,
             }),
-            path: Some(BezierPath {
-                b1,
-                b2,
-                _marker: PhantomData,
-            }),
+            path: Some(BezierPath { b1, b2 }),
             metric: Some(spline_map),
         };
 

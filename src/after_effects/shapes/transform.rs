@@ -11,29 +11,29 @@ use time_point::Duration;
 #[derive(Debug, Error)]
 pub enum TransformError {
     #[error("Failed to convert `anchor_point`: {0}")]
-    AnchorPointInvalid(#[source] <gee::Vector<f64> as FromMultiDimensional<f64>>::Error),
+    AnchorPointInvalid(#[source] <gee::Vector<f64> as FromMultiDimensional>::Error),
     #[error("Failed to convert `position`: {0}")]
-    PositionInvalid(#[source] <gee::Vector<f64> as FromMultiDimensional<f64>>::Error),
+    PositionInvalid(#[source] <gee::Vector<f64> as FromMultiDimensional>::Error),
     #[error("Failed to convert `scale`: {0}")]
-    ScaleInvalid(#[source] <gee::Vector<f64> as FromMultiDimensional<f64>>::Error),
+    ScaleInvalid(#[source] <gee::Vector<f64> as FromMultiDimensional>::Error),
     #[error("Failed to convert `rotation`: {0}")]
-    RotationInvalid(#[source] <gee::Angle<f64> as FromValue<f64>>::Error),
+    RotationInvalid(#[source] <gee::Angle<f64> as FromValue>::Error),
     #[error("Failed to convert `opacity`: {0}")]
     OpacityInvalid(#[source] <f64 as FromValue>::Error),
     #[error("Failed to convert `skew`: {0}")]
-    SkewInvalid(#[source] <gee::Angle<f64> as FromValue<f64>>::Error),
+    SkewInvalid(#[source] <gee::Angle<f64> as FromValue>::Error),
     #[error("Failed to convert `skew_axis`: {0}")]
     SkewAxisInvalid(#[source] <f64 as FromValue>::Error),
 }
 
 #[derive(Debug)]
 pub struct Transform {
-    anchor_point: MaybeTrack<gee::Vector<f64>, f64>,
-    position: MaybeTrack<gee::Vector<f64>, f64>,
-    scale: MaybeTrack<gee::Vector<f64>, f64>,
-    rotation: MaybeTrack<gee::Angle<f64>, f64>,
+    anchor_point: MaybeTrack<gee::Vector<f64>>,
+    position: MaybeTrack<gee::Vector<f64>>,
+    scale: MaybeTrack<gee::Vector<f64>>,
+    rotation: MaybeTrack<gee::Angle<f64>>,
     opacity: MaybeTrack<f64>,
-    skew: MaybeTrack<gee::Angle<f64>, f64>,
+    skew: MaybeTrack<gee::Angle<f64>>,
     skew_axis: MaybeTrack<f64>,
 }
 

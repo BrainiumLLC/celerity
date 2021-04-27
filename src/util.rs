@@ -1,30 +1,35 @@
+use gee::en;
 use time_point::Duration;
 
-pub trait Map<T>: Sized {
+pub trait Map: Sized {
+    type Component: en::Num;
+
     fn map<F>(self, f: F) -> Self
     where
-        F: Fn(T) -> T;
+        F: Fn(Self::Component) -> Self::Component;
 }
 
-pub trait ZipMap<T>: Map<T> {
+pub trait ZipMap: Map {
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
-        F: Fn(T, T) -> T;
+        F: Fn(Self::Component, Self::Component) -> Self::Component;
 }
 
-impl Map<i64> for Duration {
+impl Map for Duration {
+    type Component = i64;
+
     fn map<F>(self, f: F) -> Self
     where
-        F: Fn(i64) -> i64,
+        F: Fn(Self::Component) -> Self::Component,
     {
-        Duration::new(f(self.nanos))
+        Self::new(f(self.nanos))
     }
 }
 
-impl ZipMap<i64> for Duration {
+impl ZipMap for Duration {
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
-        F: Fn(i64, i64) -> i64,
+        F: Fn(Self::Component, Self::Component) -> Self::Component,
     {
         self.map(|nanos| f(nanos, other.nanos))
     }

@@ -19,19 +19,19 @@ TODO
 
 Celerity centers on a few traits:
 
-- `trait Animatable<C>` - A value type that can be used for animation keyframes. Must be able to `lerp(...)` (linear interpolation) and measure shortest `distance_to()` between two values A and B. `C` is the type of the scalar components (e.g. `f32`).
-- `trait Animation<V, C>` - A time-changing value `V` that you can `sample(...)` at any point in time.
-- `trait BoundedAnimation<V, C>` - An animation with a known duration
+- `trait Animatable` - A value type that can be used for animation keyframes. Must be able to `lerp(...)` (linear interpolation) and measure shortest `distance_to()` between two values A and B. `C` is the type of the scalar components (e.g. `f32`).
+- `trait Animation<V>` - A time-changing value `V` that you can `sample(...)` at any point in time.
+- `trait BoundedAnimation<V>` - An animation with a known duration
 
 ## Combinators
 
 Celerity has a set of animation combinators which can be used to produce higher-order animations:
 
-- `Chain<A, B, V, C>` - Play animation A, then play animation B
-- `Cutoff<A, V, C>` - Play only part of animation A
-- `Cycle<A, V, C>` - Repeat animation A indefinitely
-- `Interrupt<B, V, C>` - Interrupt an animation A in the middle and transition into a smooth animation B
-- `Rev<A, V, C>` - Reverse a bounded animation
+- `Chain<A, B, V>` - Play animation A, then play animation B
+- `Cutoff<A, V>` - Play only part of animation A
+- `Cycle<A, V>` - Repeat animation A indefinitely
+- `Interrupt<B, V>` - Interrupt an animation A in the middle and transition into a smooth animation B
+- `Rev<A, V>` - Reverse a bounded animation
 
 ## Keyframes vs Intervals
 

@@ -21,13 +21,13 @@ pub enum StarTypeError {
 #[derive(Debug, Error)]
 pub enum StarError {
     #[error("Failed to convert `position`: {0}")]
-    PositionInvalid(#[from] <gee::Point<f64> as FromMultiDimensional<f64>>::Error),
+    PositionInvalid(#[from] <gee::Point<f64> as FromMultiDimensional>::Error),
     #[error("Failed to convert `outer_radius`: {0}")]
     OuterRadiusInvalid(#[source] <f64 as FromValue>::Error),
     #[error("Failed to convert `outer_roundness`: {0}")]
     OuterRoundnessInvalid(#[source] <f64 as FromValue>::Error),
     #[error("Failed to convert `rotation`: {0}")]
-    RotationInvalid(#[from] <gee::Angle<f64> as FromValue<f64>>::Error),
+    RotationInvalid(#[from] <gee::Angle<f64> as FromValue>::Error),
     #[error("Failed to convert `points`: {0}")]
     PointsInvalid(#[from] <u32 as FromValue>::Error),
     #[error("Failed to classify star: {0}")]
@@ -76,10 +76,10 @@ impl StarType {
 #[derive(Debug)]
 pub struct Star {
     pub direction: f64,
-    pub position: MaybeTrack<gee::Point<f64>, f64>,
+    pub position: MaybeTrack<gee::Point<f64>>,
     pub outer_radius: MaybeTrack<f64>,
     pub outer_roundness: MaybeTrack<f64>,
-    pub rotation: MaybeTrack<gee::Angle<f64>, f64>,
+    pub rotation: MaybeTrack<gee::Angle<f64>>,
     pub points: MaybeTrack<u32>,
     pub ty: StarType,
 }

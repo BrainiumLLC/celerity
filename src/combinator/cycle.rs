@@ -1,23 +1,20 @@
 use crate::{Animatable, Animation, BoundedAnimation};
-use gee::en;
 use std::marker::PhantomData;
 use time_point::Duration;
 
-pub struct Cycle<A, V, C>
+pub struct Cycle<A, V>
 where
-    A: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    V: Animatable,
 {
     anim: A,
-    _marker: PhantomData<(V, C)>,
+    _marker: PhantomData<V>,
 }
 
-impl<A, V, C> Animation<V, C> for Cycle<A, V, C>
+impl<A, V> Animation<V> for Cycle<A, V>
 where
-    A: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
         let progress = elapsed.as_secs_f64() % self.anim.duration().as_secs_f64();
@@ -25,11 +22,10 @@ where
     }
 }
 
-impl<A, V, C> Cycle<A, V, C>
+impl<A, V> Cycle<A, V>
 where
-    A: BoundedAnimation<V, C>,
-    V: Animatable<C>,
-    C: en::Num,
+    A: BoundedAnimation<V>,
+    V: Animatable,
 {
     pub fn new(anim: A) -> Self {
         Self {

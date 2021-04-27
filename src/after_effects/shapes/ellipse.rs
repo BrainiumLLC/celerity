@@ -4,16 +4,16 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum EllipseError {
     #[error("Failed to convert `position`: {0}")]
-    PositionInvalid(#[from] <gee::Point<f64> as FromMultiDimensional<f64>>::Error),
+    PositionInvalid(#[from] <gee::Point<f64> as FromMultiDimensional>::Error),
     #[error("Failed to convert `size`: {0}")]
-    SizeInvalid(#[from] <gee::Size<f64> as FromMultiDimensional<f64>>::Error),
+    SizeInvalid(#[from] <gee::Size<f64> as FromMultiDimensional>::Error),
 }
 
 #[derive(Debug)]
 pub struct Ellipse {
     pub direction: f64,
-    pub position: MaybeTrack<gee::Point<f64>, f64>,
-    pub size: MaybeTrack<gee::Size<f64>, f64>,
+    pub position: MaybeTrack<gee::Point<f64>>,
+    pub size: MaybeTrack<gee::Size<f64>>,
 }
 
 impl Ellipse {

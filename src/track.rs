@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use crate::{
     interval::{BezierEase, BezierPath},
     spline::{
@@ -8,63 +6,55 @@ use crate::{
     },
     Animatable,
 };
-use gee::en;
 use time_point::Duration;
 
 #[derive(Clone, Debug)]
-pub enum AnimationStyle<V: Animatable<C>, C: en::Num> {
+pub enum AnimationStyle<V: Animatable> {
     Linear,
     Hold,
-    Bezier(Option<BezierEase>, BezierPath<V, C>, Option<SplineMap>),
+    Bezier(Option<BezierEase>, BezierPath<V>, Option<SplineMap>),
     Eased(fn(f64) -> f64),
 }
 
 // Basic frame w/o AnimationStyle (not sold on the name)
 #[derive(Copy, Clone, Debug)]
-pub struct Frame<V: Animatable<C>, C: en::Num> {
+pub struct Frame<V: Animatable> {
     pub offset: Duration,
     pub value: V,
-    _marker: PhantomData<C>,
 }
 
-impl<V: Animatable<C>, C: en::Num> Frame<V, C> {
+impl<V: Animatable> Frame<V> {
     pub fn new(offset: Duration, value: V) -> Self {
-        Self {
-            offset,
-            value,
-            _marker: PhantomData,
-        }
+        Self { offset, value }
     }
 }
 
 // TODO: use Frame here?
 #[derive(Clone, Debug)]
-pub struct Keyframe<V: Animatable<C>, C: en::Num> {
+pub struct Keyframe<V: Animatable> {
     pub offset: Duration,
     pub value: V,
-    pub style: AnimationStyle<V, C>,
-    _marker: PhantomData<C>,
+    pub style: AnimationStyle<V>,
 }
 
-impl<V: Animatable<C>, C: en::Num> Keyframe<V, C> {
-    pub fn new(offset: Duration, value: V, style: AnimationStyle<V, C>) -> Self {
+impl<V: Animatable> Keyframe<V> {
+    pub fn new(offset: Duration, value: V, style: AnimationStyle<V>) -> Self {
         Self {
             offset,
             value,
             style,
-            _marker: PhantomData,
         }
     }
 
-    pub fn linear(frame: Frame<V, C>) -> Self {
+    pub fn linear(frame: Frame<V>) -> Self {
         Self::new(frame.offset, frame.value, AnimationStyle::Linear)
     }
 
-    pub fn hold(frame: Frame<V, C>) -> Self {
+    pub fn hold(frame: Frame<V>) -> Self {
         Self::new(frame.offset, frame.value, AnimationStyle::Hold)
     }
 
-    pub fn bezier(frame: Frame<V, C>, ease: BezierEase, path: BezierPath<V, C>) -> Self {
+    pub fn bezier(frame: Frame<V>, ease: BezierEase, path: BezierPath<V>) -> Self {
         Self::new(
             frame.offset,
             frame.value,
@@ -74,25 +64,24 @@ impl<V: Animatable<C>, C: en::Num> Keyframe<V, C> {
 }
 
 #[derive(Clone, Debug)]
-pub struct Track<V: Animatable<C>, C: en::Num> {
-    keyframes: Vec<Keyframe<V, C>>,
+pub struct Track<V: Animatable> {
+    keyframes: Vec<Keyframe<V>>,
 }
 
-impl<V: Animatable<C>, C: en::Num> Default for Track<V, C> {
+impl<V: Animatable> Default for Track<V> {
     fn default() -> Self {
         Self { keyframes: vec![] }
     }
 }
 
-impl<V: Animatable<C>, C: en::Num> Track<V, C> {
+impl<V: Animatable> Track<V> {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn auto_bezier(frames: Vec<Frame<V, C>>) -> Self
+    pub fn auto_bezier(frames: Vec<Frame<V>>) -> Self
     where
-        V: Animatable<C>,
-        C: en::Num,
+        V: Animatable,
     {
         match frames.len() {
             0 => Self::new(),
@@ -149,33 +138,30 @@ impl<V: Animatable<C>, C: en::Num> Track<V, C> {
         }
     }
 
-    pub fn from_keyframe(keyframe: Keyframe<V, C>) -> Self {
+    pub fn from_keyframe(keyframe: Keyframe<V>) -> Self {
         Self::new().with_keyframe(keyframe)
     }
 
-    pub fn from_keyframes(keyframes: impl IntoIterator<Item = Keyframe<V, C>>) -> Self {
+    pub fn from_keyframes(keyframes: impl IntoIterator<Item = Keyframe<V>>) -> Self {
         Self::new().with_keyframes(keyframes)
     }
 
-    pub fn with_keyframe(mut self, keyframe: Keyframe<V, C>) -> Self {
+    pub fn with_keyframe(mut self, keyframe: Keyframe<V>) -> Self {
         self.add_keyframe(keyframe);
         self
     }
 
-    pub fn with_keyframes(mut self, keyframes: impl IntoIterator<Item = Keyframe<V, C>>) -> Self {
+    pub fn with_keyframes(mut self, keyframes: impl IntoIterator<Item = Keyframe<V>>) -> Self {
         self.add_keyframes(keyframes);
         self
     }
 
-    pub fn add_keyframe(&mut self, keyframe: Keyframe<V, C>) -> &mut Self {
+    pub fn add_keyframe(&mut self, keyframe: Keyframe<V>) -> &mut Self {
         self.keyframes.push(keyframe);
         self
     }
 
-    pub fn add_keyframes(
-        &mut self,
-        keyframes: impl IntoIterator<Item = Keyframe<V, C>>,
-    ) -> &mut Self {
+    pub fn add_keyframes(&mut self, keyframes: impl IntoIterator<Item = Keyframe<V>>) -> &mut Self {
         self.keyframes.extend(keyframes);
         self
     }

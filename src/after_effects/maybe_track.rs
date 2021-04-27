@@ -4,8 +4,6 @@ use crate::{
     Animatable, Animation,
 };
 use bodymovin::properties::{EitherMultiDimensional, EitherValue, MultiDimensional, Value};
-use gee::en;
-use std::marker::PhantomData;
 use time_point::Duration;
 
 impl From<bodymovin::properties::Bezier1d> for BezierEase {
@@ -20,12 +18,12 @@ impl From<bodymovin::properties::Bezier1d> for BezierEase {
 }
 
 #[derive(Debug)]
-pub enum MaybeTrack<V: Animatable<C>, C: en::Num = V> {
+pub enum MaybeTrack<V: Animatable> {
     Fixed(V),
-    Animated(IntervalTrack<V, C>),
+    Animated(IntervalTrack<V>),
 }
 
-impl<V: Animatable<C>, C: en::Num> Animation<V, C> for MaybeTrack<V, C> {
+impl<V: Animatable> Animation<V> for MaybeTrack<V> {
     fn sample(&self, elapsed: Duration) -> V {
         match self {
             Self::Fixed(value) => *value,
@@ -35,20 +33,19 @@ impl<V: Animatable<C>, C: en::Num> Animation<V, C> for MaybeTrack<V, C> {
 }
 
 #[derive(Debug)]
-struct KeyframePair<V, C> {
+struct KeyframePair<V> {
     start: Duration,
     end: Duration,
     from: V,
     to: V,
     ease: Option<BezierEase>,
-    _marker: PhantomData<C>,
 }
 
-impl<V: FromValue<C>, C: en::Num> Interval<V, C> {
+impl<V: FromValue> Interval<V> {
     fn from_value_keyframes(
         [from, to]: [&bodymovin::properties::ValueKeyframe; 2],
         frame_rate: f64,
-    ) -> Result<Interval<V, C>, V::Error> {
+    ) -> Result<Interval<V>, V::Error> {
         let from_value = V::from_value(from.start_value)?;
         let to_value = if !from.hold {
             V::from_value(to.start_value)?
@@ -67,11 +64,11 @@ impl<V: FromValue<C>, C: en::Num> Interval<V, C> {
     }
 }
 
-impl<V: FromMultiDimensional<C>, C: en::Num> Interval<V, C> {
+impl<V: FromMultiDimensional> Interval<V> {
     pub(crate) fn from_offset_keyframes(
         [from, to]: [&bodymovin::properties::OffsetKeyframe; 2],
         frame_rate: f64,
-    ) -> Result<Interval<V, C>, V::Error> {
+    ) -> Result<Interval<V>, V::Error> {
         let from_value = V::from_multi_dimensional(&from.start_value)?;
         let to_value = if !from.hold {
             V::from_multi_dimensional(&to.start_value)?
@@ -90,11 +87,7 @@ impl<V: FromMultiDimensional<C>, C: en::Num> Interval<V, C> {
     }
 }
 
-impl<V, C> MaybeTrack<V, C>
-where
-    V: FromValue<C>,
-    C: en::Num,
-{
+impl<V: FromValue> MaybeTrack<V> {
     pub(crate) fn from_value(value: EitherValue, frame_rate: f64) -> Result<Self, V::Error> {
         match value {
             EitherValue::Fixed(Value { value, .. }) => V::from_value(value).map(Self::Fixed),
@@ -109,11 +102,7 @@ where
     }
 }
 
-impl<V, C> MaybeTrack<V, C>
-where
-    V: FromMultiDimensional<C>,
-    C: en::Num,
-{
+impl<V: FromMultiDimensional> MaybeTrack<V> {
     pub(crate) fn from_multi_dimensional(
         value: EitherMultiDimensional,
         frame_rate: f64,

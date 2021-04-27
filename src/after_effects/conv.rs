@@ -1,28 +1,28 @@
-use crate::Animatable;
+use crate::{Animatable, Scalar};
 use gee::en;
 use thiserror::Error;
 
-pub trait FromValue<C: en::Num = Self>: Animatable<C> {
+pub trait FromValue: Animatable {
     type Error: std::error::Error;
 
     fn from_value(value: f64) -> Result<Self, Self::Error>;
 }
 
-pub trait FromMultiDimensional<C: en::Num = Self>: Animatable<C> {
+pub trait FromMultiDimensional: Animatable {
     type Error: std::error::Error;
 
     fn from_multi_dimensional(value: &[f64]) -> Result<Self, Self::Error>;
 }
 
-impl<T: en::Num> FromValue for T {
-    type Error = en::CastFailure<T, f64>;
+impl<S: Scalar> FromValue for S {
+    type Error = en::CastFailure<Self, f64>;
 
     fn from_value(value: f64) -> Result<Self, Self::Error> {
         en::try_cast(value)
     }
 }
 
-impl FromValue<f64> for gee::Angle<f64> {
+impl FromValue for gee::Angle<f64> {
     type Error = std::convert::Infallible;
 
     fn from_value(value: f64) -> Result<Self, Self::Error> {
@@ -82,7 +82,7 @@ pub enum CastFailedOrWrongLen<V: std::fmt::Debug + 'static, C: std::fmt::Debug +
     WrongLen(#[from] WrongLen<V>),
 }
 
-impl FromMultiDimensional<f64> for gee::Point<f64> {
+impl FromMultiDimensional for gee::Point<f64> {
     type Error = WrongLen<Self>;
 
     fn from_multi_dimensional(value: &[f64]) -> Result<Self, Self::Error> {
@@ -90,7 +90,7 @@ impl FromMultiDimensional<f64> for gee::Point<f64> {
     }
 }
 
-impl FromMultiDimensional<f64> for gee::Size<f64> {
+impl FromMultiDimensional for gee::Size<f64> {
     type Error = WrongLen<Self>;
 
     fn from_multi_dimensional(value: &[f64]) -> Result<Self, Self::Error> {
@@ -98,7 +98,7 @@ impl FromMultiDimensional<f64> for gee::Size<f64> {
     }
 }
 
-impl FromMultiDimensional<f64> for gee::Vector<f64> {
+impl FromMultiDimensional for gee::Vector<f64> {
     type Error = WrongLen<Self>;
 
     fn from_multi_dimensional(value: &[f64]) -> Result<Self, Self::Error> {
@@ -109,7 +109,7 @@ impl FromMultiDimensional<f64> for gee::Vector<f64> {
     }
 }
 
-impl FromMultiDimensional<f64> for rainbow::LinRgba {
+impl FromMultiDimensional for rainbow::LinRgba {
     type Error = CastFailedOrWrongLen<Self, f32>;
 
     fn from_multi_dimensional(value: &[f64]) -> Result<Self, Self::Error> {

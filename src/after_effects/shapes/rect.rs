@@ -11,9 +11,9 @@ use time_point::Duration;
 #[derive(Debug, Error)]
 pub enum RectError {
     #[error("Failed to convert `position`: {0}")]
-    PositionInvalid(#[from] <gee::Point<f64> as FromMultiDimensional<f64>>::Error),
+    PositionInvalid(#[from] <gee::Point<f64> as FromMultiDimensional>::Error),
     #[error("Failed to convert `size`: {0}")]
-    SizeInvalid(#[from] <gee::Size<f64> as FromMultiDimensional<f64>>::Error),
+    SizeInvalid(#[from] <gee::Size<f64> as FromMultiDimensional>::Error),
     #[error("Failed to convert `rounded_corners`: {0}")]
     RoundedCornersInvalid(#[from] <f64 as FromValue>::Error),
 }
@@ -21,8 +21,8 @@ pub enum RectError {
 #[derive(Debug)]
 pub struct Rect {
     pub direction: f64,
-    pub position: MaybeTrack<gee::Point<f64>, f64>,
-    pub size: MaybeTrack<gee::Size<f64>, f64>,
+    pub position: MaybeTrack<gee::Point<f64>>,
+    pub size: MaybeTrack<gee::Size<f64>>,
     pub rounded_corners: MaybeTrack<f64>,
 }
 
