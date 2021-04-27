@@ -206,19 +206,6 @@ impl<C: en::Float> Animatable for gee::Angle<C> {
     }
 }
 
-impl Animatable for rainbow::LinRgba {
-    // TODO: have someone who actually understands math check this
-    fn distance_to(self, other: Self) -> f64 {
-        let [ar, ag, ab, aa] = self.into_f32_array();
-        let [br, bg, bb, ba] = other.into_f32_array();
-        let r = ar - br;
-        let g = ag - bg;
-        let b = ab - bb;
-        let a = aa - ba;
-        (r * r + g * g + b * b + a * a).to_f64().sqrt()
-    }
-}
-
 impl Map for rainbow::LinRgba {
     type Component = f64;
 
@@ -247,5 +234,18 @@ impl ZipMap for rainbow::LinRgba {
             f(ab.cast(), bb.cast()).to_f32(),
             f(aa.cast(), ba.cast()).to_f32(),
         )
+    }
+}
+
+impl Animatable for rainbow::LinRgba {
+    // TODO: have someone who actually understands math check this
+    fn distance_to(self, other: Self) -> f64 {
+        let [ar, ag, ab, aa] = self.into_f32_array();
+        let [br, bg, bb, ba] = other.into_f32_array();
+        let r = ar - br;
+        let g = ag - bg;
+        let b = ab - bb;
+        let a = aa - ba;
+        (r * r + g * g + b * b + a * a).to_f64().sqrt()
     }
 }
