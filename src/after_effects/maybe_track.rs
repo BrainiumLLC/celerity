@@ -1,7 +1,7 @@
 use super::conv::{FromMultiDimensional, FromValue};
 use crate::{
-    interval::{BezierEase, Interval, IntervalTrack},
-    Animatable, Animation,
+    interval::Interval, interval_track::IntervalTrack, spline::bezier_ease::BezierEase, Animatable,
+    Animation,
 };
 use bodymovin::properties::{EitherMultiDimensional, EitherValue, MultiDimensional, Value};
 use time_point::Duration;

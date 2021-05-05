@@ -1,4 +1,4 @@
-use crate::{util::ZipMap as _, Animatable, Animation, BoundedAnimation};
+use crate::{util::ComponentWise as _, Animatable, Animation, BoundedAnimation};
 use std::marker::PhantomData;
 use time_point::Duration;
 

@@ -1,6 +1,7 @@
 pub mod after_effects;
 pub mod combinator;
 pub mod interval;
+pub mod interval_track;
 mod lerp;
 pub mod spline;
 pub mod track;

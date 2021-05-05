@@ -140,6 +140,16 @@ pub fn catmull_rom_to_bezier<V: Animatable>(
     )
 }
 
+pub fn centripetal_catmull_rom_to_bezier<V: Animatable>(
+    p0: &V,
+    p1: &V,
+    p2: &V,
+    p3: &V,
+) -> (V, V, V, V) {
+    let (t0, t1, t2, t3) = t_values(p0, p1, p2, p3, CENTRIPETAL_ALPHA);
+    catmull_rom_to_bezier(p0, p1, p2, p3, t0, t1, t2, t3)
+}
+
 // Calculate values of T for a given alpha
 // alpha = 0.0: Uniform spline
 // alpha = 0.5: Centripetal spline

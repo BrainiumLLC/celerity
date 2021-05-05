@@ -1,4 +1,6 @@
 pub mod bezier;
+pub mod bezier_ease;
+pub mod bezier_path;
 pub mod catmull_rom;
 
 use self::{bezier::dt_cubic_bezier, catmull_rom::catmull_rom_value};

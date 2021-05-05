@@ -1,6 +1,8 @@
-use crate::util::{Map, ZipMap};
 use gee::en::{self, Num as _};
+
 use std::fmt::Debug;
+
+use crate::util::ComponentWise;
 
 pub fn lerp<C: en::Num>(a: C, b: C, factor: f64) -> C {
     // This uses 2 multiplications to be numerically stable! Woo!
@@ -21,7 +23,7 @@ pub fn linear_value<V: Animatable>(p0: &V, p1: &V, t0: f64, t1: f64, t: f64) -> 
     }
 }
 
-pub trait Animatable: Copy + Debug + ZipMap {
+pub trait Animatable: Copy + Debug + ComponentWise {
     fn lerp(self, other: Self, factor: f64) -> Self {
         self.zip_map(other, |a, b| lerp(a, b, factor))
     }
@@ -32,7 +34,7 @@ pub trait Animatable: Copy + Debug + ZipMap {
 
 pub trait Scalar: en::Num {}
 
-impl<S: Scalar> Map for S {
+impl<S: Scalar> ComponentWise for S {
     type Component = Self;
 
     fn map<F>(self, f: F) -> Self
@@ -41,9 +43,7 @@ impl<S: Scalar> Map for S {
     {
         f(self)
     }
-}
 
-impl<S: Scalar> ZipMap for S {
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
         F: Fn(Self::Component, Self::Component) -> Self::Component,
@@ -73,7 +73,7 @@ impl Scalar for i64 {}
 impl Scalar for i128 {}
 impl Scalar for isize {}
 
-impl<C: en::Num> Map for (C, C) {
+impl<C: en::Num> ComponentWise for (C, C) {
     type Component = C;
 
     fn map<F>(self, f: F) -> Self
@@ -82,9 +82,7 @@ impl<C: en::Num> Map for (C, C) {
     {
         (f(self.0), f(self.1))
     }
-}
 
-impl<C: en::Num> ZipMap for (C, C) {
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
         F: Fn(Self::Component, Self::Component) -> Self::Component,
@@ -101,7 +99,7 @@ impl<C: en::Num> Animatable for (C, C) {
     }
 }
 
-impl<C: en::Num> Map for gee::Point<C> {
+impl<C: en::Num> ComponentWise for gee::Point<C> {
     type Component = C;
 
     fn map<F>(self, f: F) -> Self
@@ -110,9 +108,7 @@ impl<C: en::Num> Map for gee::Point<C> {
     {
         Self::from_tuple(self.to_tuple().map(f))
     }
-}
 
-impl<C: en::Num> ZipMap for gee::Point<C> {
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
         F: Fn(Self::Component, Self::Component) -> Self::Component,
@@ -127,7 +123,7 @@ impl<C: en::Num> Animatable for gee::Point<C> {
     }
 }
 
-impl<C: en::Num> Map for gee::Size<C> {
+impl<C: en::Num> ComponentWise for gee::Size<C> {
     type Component = C;
 
     fn map<F>(self, f: F) -> Self
@@ -136,9 +132,7 @@ impl<C: en::Num> Map for gee::Size<C> {
     {
         Self::from_tuple(self.to_tuple().map(f))
     }
-}
 
-impl<C: en::Num> ZipMap for gee::Size<C> {
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
         F: Fn(Self::Component, Self::Component) -> Self::Component,
@@ -153,7 +147,7 @@ impl<C: en::Num> Animatable for gee::Size<C> {
     }
 }
 
-impl<C: en::Num> Map for gee::Vector<C> {
+impl<C: en::Num> ComponentWise for gee::Vector<C> {
     type Component = C;
 
     fn map<F>(self, f: F) -> Self
@@ -162,9 +156,7 @@ impl<C: en::Num> Map for gee::Vector<C> {
     {
         Self::from_tuple(self.to_tuple().map(f))
     }
-}
 
-impl<C: en::Num> ZipMap for gee::Vector<C> {
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
         F: Fn(Self::Component, Self::Component) -> Self::Component,
@@ -179,7 +171,7 @@ impl<C: en::Num> Animatable for gee::Vector<C> {
     }
 }
 
-impl<C: en::Float> Map for gee::Angle<C> {
+impl<C: en::Float> ComponentWise for gee::Angle<C> {
     type Component = C;
 
     fn map<F>(self, f: F) -> Self
@@ -188,9 +180,7 @@ impl<C: en::Float> Map for gee::Angle<C> {
     {
         self.map_radians(f)
     }
-}
 
-impl<C: en::Float> ZipMap for gee::Angle<C> {
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
         F: Fn(Self::Component, Self::Component) -> Self::Component,
@@ -206,7 +196,7 @@ impl<C: en::Float> Animatable for gee::Angle<C> {
     }
 }
 
-impl Map for rainbow::LinRgba {
+impl ComponentWise for rainbow::LinRgba {
     type Component = f64;
 
     fn map<F>(self, f: F) -> Self
@@ -218,9 +208,7 @@ impl Map for rainbow::LinRgba {
             f(c.cast()).to_f32()
         }))
     }
-}
 
-impl ZipMap for rainbow::LinRgba {
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
         F: Fn(Self::Component, Self::Component) -> Self::Component,

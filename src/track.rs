@@ -1,8 +1,7 @@
 use crate::{
-    interval::{BezierEase, BezierPath},
     spline::{
-        catmull_rom::{catmull_rom_to_bezier, t_values},
-        SplineMap,
+        bezier_ease::BezierEase, bezier_path::BezierPath,
+        catmull_rom::centripetal_catmull_rom_to_bezier, SplineMap,
     },
     Animatable,
 };
@@ -109,9 +108,8 @@ impl<V: Animatable> Track<V> {
                     };
 
                     // Determine Bezier control points
-                    let (t0, t1, t2, t3) = t_values(&cr0, &cr1, &cr2, &cr3, 0.5);
                     let (b0, b1, b2, b3) =
-                        catmull_rom_to_bezier(&cr0, &cr1, &cr2, &cr3, t0, t1, t2, t3);
+                        centripetal_catmull_rom_to_bezier(&cr0, &cr1, &cr2, &cr3);
 
                     // Bezier Keyframe
                     // (BezierPath now describes control points for position, not easing (TODO: easing))
