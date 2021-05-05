@@ -25,7 +25,7 @@ pub struct InspectInterval<V: Animatable> {
     pub start: Duration,
     pub end: Duration,
     pub ease: Vec<(f64, f64)>,
-    pub path: Vec<(f64, V)>,
+    pub path: Vec<V>,
     pub metric: Option<Vec<(f64, f64)>>,
 }
 
@@ -116,7 +116,7 @@ impl<V: Animatable> Interval<V> {
         InspectInterval {
             start: self.start,
             end: self.end,
-            path: self.sample_path(self.start, self.end, detail),
+            path: self.debug_path(detail, self.end - self.start),
             ease: match &self.ease {
                 Some(ease) => sample_ease(ease),
                 None => vec![(0.0, 0.0), (1.0, 1.0)],
