@@ -87,51 +87,36 @@ impl<V: Animatable> Track<V> {
             1 => Self::from_keyframes(vec![Keyframe::hold(frames[0])]),
             2 => Self::from_keyframes(vec![Keyframe::linear(frames[0]), Keyframe::hold(frames[1])]),
             _ => {
-                // Gather coordinate values from frames
-                let cr_coords = frames.iter().map(|frame| frame.value).collect::<Vec<_>>();
+                let last_frame = *frames.last().unwrap();
+                let bookended_frames = std::iter::once(frames[0])
+                    .chain(frames)
+                    .chain(std::iter::once(last_frame))
+                    .collect::<Vec<Frame<V>>>();
 
-                // Construct Bezier Keyframes using Catmull-Rom spline
-                let mut keyframes = vec![];
-                for i in 0..cr_coords.len() - 1 {
-                    // Determine Catmull-Rom (cr) coordinates for current segment
-                    let cr0 = if i == 0 {
-                        cr_coords[0] // We may want to augment this point to influence our animation
-                    } else {
-                        cr_coords[i - 1]
-                    };
-                    let cr1 = cr_coords[i];
-                    let cr2 = cr_coords[i + 1];
-                    let cr3 = if i == cr_coords.len() - 2 {
-                        cr_coords[i + 1] // We may want to augment this point to influence our animation
-                    } else {
-                        cr_coords[i + 2]
-                    };
+                Self::from_keyframes(
+                    bookended_frames
+                        .windows(4)
+                        .map(|window| {
+                            let (b0, b1, b2, b3) = centripetal_catmull_rom_to_bezier(
+                                &window[0].value,
+                                &window[1].value,
+                                &window[2].value,
+                                &window[3].value,
+                            );
 
-                    // Determine Bezier control points
-                    let (b0, b1, b2, b3) =
-                        centripetal_catmull_rom_to_bezier(&cr0, &cr1, &cr2, &cr3);
-
-                    // Bezier Keyframe
-                    // (BezierPath now describes control points for position, not easing (TODO: easing))
-                    keyframes.push(Keyframe::new(
-                        frames[i].offset,
-                        b0,
-                        AnimationStyle::Bezier(
-                            None,
-                            BezierPath::new(b1, b2),
-                            Some(SplineMap::from_bezier(&b0, &b1, &b2, &b3)),
-                        ),
-                    ));
-                }
-
-                // Hold frame at the end of the track contains final value/duration
-                keyframes.push(Keyframe::new(
-                    frames.last().unwrap().offset,
-                    frames.last().unwrap().value,
-                    AnimationStyle::Hold,
-                ));
-
-                Self::from_keyframes(keyframes)
+                            Keyframe::new(
+                                window[1].offset,
+                                b0,
+                                AnimationStyle::Bezier(
+                                    None,
+                                    BezierPath::new(b1, b2),
+                                    Some(SplineMap::from_bezier(&b0, &b1, &b2, &b3)),
+                                ),
+                            )
+                        })
+                        .chain(std::iter::once(Keyframe::hold(last_frame)))
+                        .collect::<Vec<Keyframe<V>>>(),
+                )
             }
         }
     }
