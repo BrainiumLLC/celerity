@@ -4,12 +4,11 @@ pub mod interval;
 pub mod interval_track;
 mod lerp;
 pub mod spline;
-pub mod track;
 mod util;
 
 use std::fmt::Debug;
 
-pub use self::{combinator::*, lerp::*, track::*};
+pub use self::{combinator::*, lerp::*};
 
 use gee::en;
 use time_point::{Duration, TimePoint};

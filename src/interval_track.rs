@@ -1,11 +1,7 @@
-use crate::{
-    interval::Interval,
-    spline::{
+use crate::{Animatable, Animation, BoundedAnimation, interval::{Frame, Interval}, spline::{
         bezier_ease::BezierEase, bezier_path::BezierPath,
         catmull_rom::centripetal_catmull_rom_to_bezier, SplineMap,
-    },
-    Animatable, Animation, AnimationStyle, BoundedAnimation, Frame, Keyframe,
-};
+    }};
 use time_point::Duration;
 
 #[derive(Clone, Debug)]
@@ -98,62 +94,6 @@ impl<V: Animatable> IntervalTrack<V> {
         ))
     }
 
-    pub fn from_keyframes(keyframes: Vec<Keyframe<V>>) -> Self {
-        match keyframes.len() {
-            0 => Self::new(),
-            1 => Self::new().with_interval(Interval::hold(keyframes[0].value)),
-            _ => {
-                // TODO: Is there a better way to accumulate a value while mapping over an iterator?
-                let mut acc_offset = Duration::zero();
-                Self::new().with_intervals(
-                    keyframes
-                        .windows(2)
-                        .map(|window| {
-                            acc_offset = acc_offset + window[0].offset;
-                            match &window[0].style {
-                                AnimationStyle::Hold => Interval::new(
-                                    acc_offset,
-                                    acc_offset + window[1].offset,
-                                    window[0].value,
-                                    window[0].value,
-                                    None,
-                                    None,
-                                    None,
-                                ),
-                                AnimationStyle::Linear => Interval::new(
-                                    acc_offset,
-                                    acc_offset + window[1].offset,
-                                    window[0].value,
-                                    window[1].value,
-                                    None,
-                                    None,
-                                    None,
-                                ),
-                                AnimationStyle::Bezier(ease, path, metric) => Interval::new(
-                                    acc_offset,
-                                    acc_offset + window[1].offset,
-                                    window[0].value,
-                                    window[1].value,
-                                    ease.clone(),
-                                    Some(path.clone()),
-                                    metric.clone(),
-                                ),
-                                AnimationStyle::Eased(ease) => Interval::new(
-                                    acc_offset,
-                                    acc_offset + window[1].offset,
-                                    window[0].value,
-                                    window[1].value,
-                                    None,
-                                    None,
-                                    Some(SplineMap::from_spline(ease)),
-                                ),
-                            }
-                        })
-                        .collect::<Vec<Interval<V>>>(),
-                ) // TODO: Is the collect() here strictly necessary?
-            }
-        }
-    }
 
     pub fn with_track_ease(mut self, track_ease: Option<BezierEase>) -> Self {
         self.track_ease = track_ease;

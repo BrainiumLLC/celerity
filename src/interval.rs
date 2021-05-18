@@ -5,9 +5,22 @@ use crate::{
         bezier_path::BezierPath,
         spline_ease, SplineMap,
     },
-    Animatable, Animation, BoundedAnimation, Frame,
+    Animatable, Animation, BoundedAnimation,
 };
 use time_point::Duration;
+
+// A half-interval
+#[derive(Copy, Clone, Debug)]
+pub struct Frame<V: Animatable> {
+    pub offset: Duration,
+    pub value: V,
+}
+
+impl<V: Animatable> Frame<V> {
+    pub fn new(offset: Duration, value: V) -> Self {
+        Self { offset, value }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct Interval<V: Animatable> {
