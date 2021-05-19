@@ -1,7 +1,11 @@
-use crate::{Animatable, Animation, BoundedAnimation, interval::{Frame, Interval}, spline::{
+use crate::{
+    interval::{Frame, Interval},
+    spline::{
         bezier_ease::BezierEase, bezier_path::BezierPath,
         catmull_rom::centripetal_catmull_rom_to_bezier, SplineMap,
-    }};
+    },
+    Animatable, Animation, BoundedAnimation,
+};
 use time_point::Duration;
 
 #[derive(Clone, Debug)]
@@ -93,7 +97,6 @@ impl<V: Animatable> IntervalTrack<V> {
             },
         ))
     }
-
 
     pub fn with_track_ease(mut self, track_ease: Option<BezierEase>) -> Self {
         self.track_ease = track_ease;
