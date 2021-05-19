@@ -45,15 +45,13 @@ impl BezierEase {
 
 #[cfg(test)]
 mod tests {
-    use gee::en;
-    use time_point::Duration;
-
+    use super::*;
     use crate::{
         interval::Interval, interval_track::IntervalTrack, spline::bezier_path::BezierPath,
-        spline::SplineMap, Animatable,
+        spline::SplineMap, Animatable, Animation as _,
     };
-
-    use super::*;
+    use gee::en;
+    use time_point::Duration;
 
     const TOLERANCE: f64 = 1e-4;
     const TOLERANCE_LOOSE: f64 = 1e-3;
@@ -92,10 +90,7 @@ mod tests {
             metric: None,
         };
 
-        let track = IntervalTrack {
-            intervals: vec![interval],
-            track_ease: None,
-        };
+        let track = IntervalTrack::new().with_interval(interval);
 
         // Animation should be linear
         assert!(approx_eq(track.sample(start), from, TOLERANCE));
@@ -131,10 +126,7 @@ mod tests {
             metric: None,
         };
 
-        let track = IntervalTrack {
-            intervals: vec![interval],
-            track_ease: None,
-        };
+        let track = IntervalTrack::new().with_interval(interval);
 
         // Animation should ease towards start and end
         assert!(approx_eq(track.sample(start), from, TOLERANCE));
@@ -178,10 +170,7 @@ mod tests {
             metric: None,
         };
 
-        let track = IntervalTrack {
-            intervals: vec![interval],
-            track_ease: None,
-        };
+        let track = IntervalTrack::new().with_interval(interval);
 
         // Animation should ease towards start and end
         assert!(approx_eq_point(track.sample(start), from, TOLERANCE));
@@ -230,10 +219,7 @@ mod tests {
             metric: Some(spline_map),
         };
 
-        let track = IntervalTrack {
-            intervals: vec![interval],
-            track_ease: None,
-        };
+        let track = IntervalTrack::new().with_interval(interval);
 
         assert!(approx_eq_point(track.sample(start), from, TOLERANCE));
         assert!(approx_eq_point(track.sample(end), to, TOLERANCE));
@@ -287,10 +273,7 @@ mod tests {
             metric: Some(spline_map),
         };
 
-        let track = IntervalTrack {
-            intervals: vec![interval],
-            track_ease: None,
-        };
+        let track = IntervalTrack::new().with_interval(interval);
 
         assert!(approx_eq_point(track.sample(start), from, TOLERANCE));
         assert!(approx_eq_point(track.sample(end), to, TOLERANCE));
