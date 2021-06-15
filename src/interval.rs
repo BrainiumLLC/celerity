@@ -75,20 +75,12 @@ impl<V: Animatable> Interval<V> {
         )
     }
 
-    pub fn transition(a: Frame<V>, b: Frame<V>) -> Self {
-        Self::new(
-            a.offset,
-            b.offset,
-            a.value,
-            b.value,
-            Some(BezierEase::new(0.333, 0.0, 0.666, 1.0)),
-            None,
-            None,
-        )
+    pub fn transition(a: Frame<V>, b: Frame<V>, ease: Option<BezierEase>) -> Self {
+        Self::new(a.offset, b.offset, a.value, b.value, ease, None, None)
     }
 
-    pub fn linear(a: Frame<V>, b: Frame<V>, ease: Option<BezierEase>) -> Self {
-        Self::new(a.offset, b.offset, a.value, b.value, ease, None, None)
+    pub fn linear(a: Frame<V>, b: Frame<V>) -> Self {
+        Self::new(a.offset, b.offset, a.value, b.value, None, None, None)
     }
 
     pub fn hold(value: V) -> Self {
@@ -100,6 +92,24 @@ impl<V: Animatable> Interval<V> {
             None,
             None,
             None, // Is it possible to have a splinemap without a path?
+        )
+    }
+
+    pub fn interrupt(
+        interrupt_t: Duration,
+        transition_t: Duration,
+        interrupt_v: V,
+        target: V,
+        ease: Option<BezierEase>,
+    ) -> Self {
+        Self::new(
+            interrupt_t,
+            interrupt_t + transition_t,
+            interrupt_v,
+            target,
+            ease,
+            None,
+            None,
         )
     }
 
