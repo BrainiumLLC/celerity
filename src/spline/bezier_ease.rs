@@ -28,6 +28,9 @@ impl BezierEase {
         (b0, b1, b2, b3)
     }
 
+    pub fn linear() -> Self {
+        Self::new(0.16, 0.16, 0.84, 0.84)
+    }
     pub fn ease_in() -> Self {
         Self::new(0.16, 0.0, 0.84, 0.84)
     }
