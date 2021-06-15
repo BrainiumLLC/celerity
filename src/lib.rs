@@ -6,11 +6,9 @@ mod lerp;
 pub mod spline;
 mod util;
 
-use std::fmt::Debug;
-
 pub use self::{combinator::*, lerp::*};
-
-use gee::en;
+use gee::en::{self, Num as _};
+use std::fmt::Debug;
 use time_point::{Duration, TimePoint};
 
 pub trait Animation<V: Animatable> {
@@ -35,12 +33,12 @@ pub trait Animation<V: Animatable> {
 
     // Sampling error can occur arround tight curves, showing reduced velocity
     fn debug_velocity(&self, sample_count: usize, sample_duration: Duration) -> Vec<V> {
-        let sample_delta = sample_duration.as_secs_f64() / en::cast::<f64, _>(sample_count);
+        let sample_delta = sample_duration.as_secs_f64() / sample_count.to_f64();
         self.debug_path(sample_count + 1, sample_duration)
             .windows(2)
             .map(|window| {
                 window[1].zip_map(window[0], |a, b| {
-                    (a - b) / en::cast::<V::Component, f64>(sample_delta)
+                    (a - b) / V::cast_component::<f64>(sample_delta)
                 })
             })
             .collect()

@@ -1,4 +1,4 @@
-use gee::en;
+use gee::en::{self, Num};
 use time_point::Duration;
 
 pub trait ComponentWise: Sized {
@@ -17,6 +17,9 @@ pub trait ComponentWise: Sized {
     }
     fn sub(self, other: Self) -> Self {
         self.zip_map(other, std::ops::Sub::sub)
+    }
+    fn cast_component<T: en::Num>(other: T) -> Self::Component {
+        en::cast(other)
     }
 }
 

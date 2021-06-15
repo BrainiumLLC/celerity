@@ -22,6 +22,10 @@ impl<V: Animatable> IntervalTrack<V> {
         }
     }
 
+    pub fn from_interval(interval: Interval<V>) -> Self {
+        Self::new().with_interval(interval)
+    }
+
     pub fn from_intervals(intervals: impl IntoIterator<Item = Interval<V>>) -> Self {
         Self::new().with_intervals(intervals)
     }
@@ -34,17 +38,16 @@ impl<V: Animatable> IntervalTrack<V> {
     ) -> Self {
         match values.len() {
             0 => IntervalTrack::new(),
-            1 => IntervalTrack::new().with_interval(Interval::hold(values[0])),
-            2 => IntervalTrack::new().with_interval(Interval::linear(
+            1 => IntervalTrack::from_interval(Interval::hold(values[0])),
+            2 => IntervalTrack::from_interval(Interval::linear(
                 Frame::new(start, values[0]),
-                Frame::new(start + duration, values[1]),
-                None,
+                Frame::new(start + duration, values[1])
             )),
             _ => {
                 // Add first/last values to refine animation path
                 let bookended_values = bookend(values, BookendStyle::Linear);
                 // Calculate BezierPath and SplineMap for each interval
-                let (paths, maps) = values_to_bezier_structs(&bookended_values);
+                let (paths, maps) = bookended_values_to_bezier_structs(&bookended_values);
                 // Calculate durations for each interval threshold
                 let durations = constant_velocity_durations(&accumulate_lengths(&maps), duration);
 
@@ -135,72 +138,91 @@ impl<V: Animatable> IntervalTrack<V> {
 
 impl<V: Animatable> Animation<V> for IntervalTrack<V> {
     fn sample(&self, elapsed: Duration) -> V {
-        match &self.track_ease {
-            Some(ease) => {
-                let eased_elapsed = self.duration()
+        let eased_elapsed = self
+            .track_ease
+            .as_ref()
+            .map(|ease| {
+                self.duration()
                     * ease.ease(
                         (elapsed - self.intervals[0].start).as_secs_f64()
                             / self.duration().as_secs_f64(),
-                    );
-                self.current_interval(&eased_elapsed)
-                    .unwrap()
-                    .sample(eased_elapsed)
-            }
-            None => self.current_interval(&elapsed).unwrap().sample(elapsed),
-        }
+                    )
+            })
+            .unwrap_or(elapsed);
+
+        self.current_interval(&eased_elapsed)
+            .expect("tried to sample empty `IntervalTrack`")
+            .sample(eased_elapsed)
     }
 }
 
 impl<V: Animatable> BoundedAnimation<V> for IntervalTrack<V> {
     fn duration(&self) -> Duration {
-        self.intervals.last().unwrap().end - self.intervals[0].start
+        self.intervals
+            .last()
+            .map(|last| last.end - self.intervals[0].start)
+            .unwrap_or_default()
     }
 }
 
-// Different ways of selecting additional control points at either end of a series of values.
+/// Different ways of selecting additional control points at either end of a series of values.
 pub enum BookendStyle {
-    // Repeat the first and last values
+    /// Repeat the first and last values
     Repeat,
-    // Linearly extrapolate using the first two and last two values
+    /// Linearly extrapolate using the first two and last two values
     Linear,
-    // Use the first/last three points to calculate a point that would loop back toward the second-to-first/last point
+    /// Use the first/last three points to calculate a point that would loop back toward the second-to-first/last point
     Spiral,
 }
 
-pub fn bookend<V: Animatable>(values: Vec<V>, style: BookendStyle) -> Vec<V> {
-    match style {
-        BookendStyle::Repeat => {
-            let final_bookend = *values.last().unwrap();
-            std::iter::once(values[0])
-                .chain(values)
-                .chain(std::iter::once(final_bookend))
-                .collect()
-        }
-        BookendStyle::Linear => {
-            let last_index = values.len() - 1;
-            let initial_bookend = values[0].sub(values[1]);
-            let final_bookend = values[last_index].sub(values[last_index - 1]);
+fn bookend<V: Animatable>(values: Vec<V>, style: BookendStyle) -> Vec<V> {
+    if values.is_empty() {
+        values
+    } else {
+        match style {
+            BookendStyle::Repeat => {
+                let final_bookend = *values.last().unwrap();
+                std::iter::once(values[0])
+                    .chain(values)
+                    .chain(std::iter::once(final_bookend))
+                    .collect()
+            }
+            BookendStyle::Linear => {
+                assert!(
+                    values.len() >= 2,
+                    "Linear bookending requires 2 or more values, but you only specified {}",
+                    values.len()
+                );
+                let last_index = values.len() - 1;
+                let initial_bookend = values[0].sub(values[1]);
+                let final_bookend = values[last_index].sub(values[last_index - 1]);
 
-            std::iter::once(initial_bookend)
-                .chain(values)
-                .chain(std::iter::once(final_bookend))
-                .collect()
-        }
-        BookendStyle::Spiral => {
-            let last_index = values.len() - 1;
-            let initial_bookend = values[0].sub(values[1].sub(values[2]));
-            let final_bookend =
-                values[last_index].sub(values[last_index - 1].sub(values[last_index - 2]));
+                std::iter::once(initial_bookend)
+                    .chain(values)
+                    .chain(std::iter::once(final_bookend))
+                    .collect()
+            }
+            BookendStyle::Spiral => {
+                assert!(
+                    values.len() >= 3,
+                    "Spiral bookending requires 3 or more values, but you only specified {}",
+                    values.len()
+                );
+                let last_index = values.len() - 1;
+                let initial_bookend = values[0].sub(values[1].sub(values[2]));
+                let final_bookend =
+                    values[last_index].sub(values[last_index - 1].sub(values[last_index - 2]));
 
-            std::iter::once(initial_bookend)
-                .chain(values)
-                .chain(std::iter::once(final_bookend))
-                .collect()
+                std::iter::once(initial_bookend)
+                    .chain(values)
+                    .chain(std::iter::once(final_bookend))
+                    .collect()
+            }
         }
     }
 }
 
-pub fn bookend_frames<V: Animatable>(frames: Vec<Frame<V>>, style: BookendStyle) -> Vec<Frame<V>> {
+fn bookend_frames<V: Animatable>(frames: Vec<Frame<V>>, style: BookendStyle) -> Vec<Frame<V>> {
     let bookended_values = bookend(frames.iter().map(|frame| frame.value).collect(), style);
     let bookended_durations = std::iter::once(Duration::zero())
         .chain(frames.into_iter().map(|frame| frame.offset))
@@ -213,7 +235,7 @@ pub fn bookend_frames<V: Animatable>(frames: Vec<Frame<V>>, style: BookendStyle)
         .collect()
 }
 
-fn values_to_bezier_structs<V: Animatable>(
+fn bookended_values_to_bezier_structs<V: Animatable>(
     values: &Vec<V>,
 ) -> (Vec<BezierPath<V>>, Vec<SplineMap>) {
     values
