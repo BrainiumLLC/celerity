@@ -39,9 +39,10 @@ impl<V: Animatable> IntervalTrack<V> {
         match values.len() {
             0 => IntervalTrack::new(),
             1 => IntervalTrack::from_interval(Interval::hold(values[0])),
-            2 => IntervalTrack::from_interval(Interval::linear(
+            2 => IntervalTrack::from_interval(Interval::transition(
                 Frame::new(start, values[0]),
-                Frame::new(start + duration, values[1])
+                Frame::new(start + duration, values[1]),
+                track_ease,
             )),
             _ => {
                 // Add first/last values to refine animation path
