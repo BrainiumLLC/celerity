@@ -46,7 +46,7 @@ where
     B: Animation<V>,
     V: Animatable,
 {
-    pub fn new(a: A, b: B) -> Self {
+    pub(crate) fn new(a: A, b: B) -> Self {
         Self {
             a,
             b,

@@ -27,7 +27,7 @@ where
     A: BoundedAnimation<V>,
     V: Animatable,
 {
-    pub fn new(anim: A) -> Self {
+    pub(crate) fn new(anim: A) -> Self {
         Self {
             anim,
             _marker: PhantomData,

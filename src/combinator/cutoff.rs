@@ -41,7 +41,7 @@ where
     A: Animation<V>,
     V: Animatable,
 {
-    pub fn new(anim: A, cutoff: Duration) -> Self {
+    pub(crate) fn new(anim: A, cutoff: Duration) -> Self {
         Self {
             anim,
             cutoff,
