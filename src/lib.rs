@@ -1,7 +1,7 @@
 //! Buttery smooth animation toolkit.
 
 pub mod after_effects;
-pub mod combinator;
+mod combinators;
 mod component_wise;
 pub mod constant;
 pub mod debug;
@@ -11,7 +11,7 @@ pub mod interval_track;
 mod lerp;
 pub mod spline;
 
-pub use self::{combinator::*, component_wise::*, lerp::*};
+pub use self::{combinators::*, component_wise::*, lerp::*};
 use gee::en;
 use std::fmt::Debug;
 use time_point::{Duration, TimePoint};
