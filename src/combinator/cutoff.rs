@@ -2,6 +2,7 @@ use crate::{Animatable, Animation, BoundedAnimation};
 use std::marker::PhantomData;
 use time_point::Duration;
 
+/// See [`Animation::cutoff`] for details.
 pub struct Cutoff<A, V>
 where
     A: Animation<V>,

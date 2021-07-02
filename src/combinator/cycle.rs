@@ -2,6 +2,7 @@ use crate::{Animatable, Animation, BoundedAnimation};
 use std::marker::PhantomData;
 use time_point::Duration;
 
+/// See [`BoundedAnimation::cycle`] for details.
 pub struct Cycle<A, V>
 where
     A: BoundedAnimation<V>,

@@ -1,9 +1,8 @@
+use crate::ComponentWise;
 use gee::en::{self, Num as _};
-
 use std::fmt::Debug;
 
-use crate::util::ComponentWise;
-
+/// Linearly interpolates between two numbers.
 pub fn lerp<C: en::Num>(a: C, b: C, factor: f64) -> C {
     // This uses 2 multiplications to be numerically stable! Woo!
     (a.to_f64() * (1.0 - factor) + b.to_f64() * factor).cast()
@@ -23,15 +22,21 @@ pub fn linear_value<V: Animatable>(p0: &V, p1: &V, t0: f64, t1: f64, t: f64) -> 
     }
 }
 
+/// A value that can be animated.
 pub trait Animatable: Copy + Debug + ComponentWise {
+    /// Linearly interpolatables between two `Animatable`s.
     fn lerp(self, other: Self, factor: f64) -> Self {
         self.zip_map(other, |a, b| lerp(a, b, factor))
     }
 
-    // The shortest distance between two animatables (never negative)
+    /// The shortest distance between two `Animatable`s (never negative!)
     fn distance_to(self, other: Self) -> f64;
 }
 
+/// A numeric primitive.
+///
+/// Implementors of this trait automatically get a [`ComponentWise`] and
+/// [`Animatable`] implementation.
 pub trait Scalar: en::Num {}
 
 impl<S: Scalar> ComponentWise for S {

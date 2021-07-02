@@ -1,7 +1,8 @@
-use crate::{util::ComponentWise as _, Animatable, Animation, BoundedAnimation};
+use crate::{Animatable, Animation, BoundedAnimation, ComponentWise as _};
 use std::marker::PhantomData;
 use time_point::Duration;
 
+/// See [`BoundedAnimation::rev`] for details.
 pub struct Rev<A, V>
 where
     A: BoundedAnimation<V>,

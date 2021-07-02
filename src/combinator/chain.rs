@@ -2,6 +2,7 @@ use crate::{Animatable, Animation, BoundedAnimation};
 use std::marker::PhantomData;
 use time_point::Duration;
 
+/// See [`BoundedAnimation::chain`] for details.
 pub struct Chain<A, B, V>
 where
     A: BoundedAnimation<V>,
