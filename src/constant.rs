@@ -6,6 +6,7 @@ use time_point::Duration;
 /// This likely isn't very useful, besides the potential as a default. Its main
 /// purpose is to demonstrate the properties of the most fundamental animation
 /// possible.
+#[derive(Debug)]
 pub struct Constant<V>
 where
     V: Animatable,

@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use time_point::Duration;
 
 /// See [`Animation::cutoff`] for details.
+#[derive(Debug)]
 pub struct Cutoff<A, V>
 where
     A: Animation<V>,

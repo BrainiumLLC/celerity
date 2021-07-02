@@ -5,6 +5,7 @@ pub mod combinator;
 mod component_wise;
 pub mod constant;
 pub mod debug;
+pub mod function;
 pub mod interval;
 pub mod interval_track;
 mod lerp;
@@ -22,7 +23,7 @@ use time_point::{Duration, TimePoint};
 /// `Animation` on the other end.
 ///
 /// Implementors should only implement [`Animation::sample`].
-pub trait Animation<V: Animatable> {
+pub trait Animation<V: Animatable>: Debug {
     /// Samples the animation at the specified duration.
     ///
     /// `elapsed` is the duration since the "start" of the animation. Animations
@@ -46,12 +47,6 @@ pub trait Animation<V: Animatable> {
         Self: Sized,
     {
         Cutoff::new(self, duration)
-    }
-}
-
-impl<V: Animatable> Debug for dyn Animation<V> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "Animation") // TODO: Include something meaningful?
     }
 }
 
@@ -119,21 +114,5 @@ pub trait BoundedAnimation<V: Animatable>: Animation<V> {
         Self: Clone + Sized,
     {
         self.clone().chain(self.rev())
-    }
-}
-
-impl<V: Animatable> Debug for dyn BoundedAnimation<V> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "BoundedAnimation") // TODO: Include something meaningful?
-    }
-}
-
-impl<F, V> Animation<V> for F
-where
-    F: Fn(Duration) -> V,
-    V: Animatable,
-{
-    fn sample(&self, elapsed: Duration) -> V {
-        (*self)(elapsed)
     }
 }

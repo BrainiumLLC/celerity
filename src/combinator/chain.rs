@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use time_point::Duration;
 
 /// See [`BoundedAnimation::chain`] for details.
+#[derive(Debug)]
 pub struct Chain<A, B, V>
 where
     A: BoundedAnimation<V>,

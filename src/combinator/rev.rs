@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use time_point::Duration;
 
 /// See [`BoundedAnimation::rev`] for details.
+#[derive(Debug)]
 pub struct Rev<A, V>
 where
     A: BoundedAnimation<V>,
