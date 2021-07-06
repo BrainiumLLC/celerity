@@ -1,7 +1,7 @@
 use gee::en;
 use time_point::Duration;
 
-/// A type that has zero or more numeric components.
+/// A value that has zero or more numeric components.
 pub trait ComponentWise: Sized {
     type Component: en::Num;
 
