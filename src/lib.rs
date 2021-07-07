@@ -48,6 +48,19 @@ pub trait Animation<V: Animatable>: Debug {
     {
         Cutoff::new(self, duration)
     }
+
+    fn interrupt<A>(
+        self,
+        other: A,
+        interrupt_t: Duration,
+        transition_t: Duration,
+    ) -> Interrupt<Cutoff<Self, V>, A, V>
+    where
+        Self: Sized,
+        A: Animation<V>,
+    {
+        Interrupt::new(self.cutoff(interrupt_t), other, interrupt_t, transition_t)
+    }
 }
 
 /// An [`Animation`] where the value stops changing after a known duration.

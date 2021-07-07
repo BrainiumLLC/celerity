@@ -1,7 +1,5 @@
 use crate::{
-    interval::{Frame, Interval},
-    spline::{bezier::cubic_bezier_ease, bezier_ease::BezierEase},
-    Animatable, Animation, BoundedAnimation,
+    interval::Interval, spline::bezier_ease::BezierEase, Animatable, Animation, BoundedAnimation,
 };
 use gee::en;
 use time_point::Duration;
@@ -9,49 +7,68 @@ use time_point::Duration;
 const SAMPLE_DELTA: f64 = 1e-5;
 
 #[derive(Debug)]
-pub struct Interrupt<A, V>
+pub struct Interrupt<A, B, V>
 where
     A: Animation<V>,
+    B: Animation<V>,
     V: Animatable,
 {
-    a: Linear<V>,
-    b: A,
+    a: Option<A>,
+    a_interrupt: Linear<V>,
+    b: B,
     interrupt_t: Duration,
     transition_t: Duration,
 }
 
-impl<A, V> Animation<V> for Interrupt<A, V>
+impl<A, B, V> Animation<V> for Interrupt<A, B, V>
 where
-    A: BoundedAnimation<V>,
+    A: Animation<V>,
+    B: Animation<V>,
     V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
-        // relative change from interrupt_v for each animation
-        let interrupt_v = self.a.sample(self.interrupt_t);
+        if elapsed >= self.interrupt_t {
+            let elapsed = elapsed - self.interrupt_t;
 
-        let a_contribution = self.a.sample(elapsed).zip_map(interrupt_v, |a, v| a - v);
-        let b_contribution = self.b.sample(elapsed).zip_map(interrupt_v, |b, v| b - v);
+            // relative change from interrupt.value for each animation
+            let a_contribution = self
+                .a_interrupt
+                .sample(elapsed)
+                .zip_map(self.a_interrupt.value, |a, v| a - v);
+            let b_contribution = self
+                .b
+                .sample(elapsed)
+                .zip_map(self.a_interrupt.value, |b, v| b - v);
 
-        // calculate ease
-        let transition_percent_elapsed = ((elapsed.as_secs_f64() - self.interrupt_t.as_secs_f64())
-            / self.transition_t.as_secs_f64())
-        .min(1.0);
-        let ease = BezierEase::ease_in_out().ease(transition_percent_elapsed);
+            // calculate ease
+            let transition_percent_elapsed =
+                ((elapsed.as_secs_f64()) / self.transition_t.as_secs_f64()).min(1.0);
+            let ease = BezierEase::ease_in_out().ease(transition_percent_elapsed);
 
-        // blend a_contribution and b_contribution
-        let blended_contributions = a_contribution.zip_map(b_contribution, |a, b| {
-            let ac = a * en::cast::<V::Component, _>(1.0 - ease);
-            let bc = b;
-            ac + bc
-        });
+            // blend a_contribution and b_contribution
+            let blended_contributions = a_contribution.zip_map(b_contribution, |a, b| {
+                let ac = a * en::cast::<V::Component, _>(1.0 - ease);
+                let bc = b;
+                ac + bc
+            });
 
-        interrupt_v.zip_map(blended_contributions, |v, b| v + b)
+            self.a_interrupt
+                .value
+                .zip_map(blended_contributions, |v, b| v + b)
+        } else {
+            if let Some(animation) = &self.a {
+                animation.sample(elapsed)
+            } else {
+                self.a_interrupt.sample(elapsed)
+            }
+        }
     }
 }
 
-impl<A, V> BoundedAnimation<V> for Interrupt<A, V>
+impl<A, B, V> BoundedAnimation<V> for Interrupt<A, B, V>
 where
-    A: BoundedAnimation<V>,
+    A: Animation<V>,
+    B: BoundedAnimation<V>,
     V: Animatable,
 {
     fn duration(&self) -> Duration {
@@ -59,17 +76,20 @@ where
     }
 }
 
-impl<A, V> Interrupt<A, V>
+impl<A, B, V> Interrupt<A, B, V>
 where
     A: Animation<V>,
+    B: Animation<V>,
     V: Animatable,
 {
-    pub fn boxed(
-        a: &Box<dyn Animation<V>>,
-        b: A,
-        interrupt_t: Duration,
-        transition_t: Duration,
-    ) -> Box<Self> {
+    pub fn new(a: A, b: B, interrupt_t: Duration, transition_t: Duration) -> Self {
+        Self {
+            a: None,
+            ..Self::reversible(a, b, interrupt_t, transition_t)
+        }
+    }
+
+    pub fn reversible(a: A, b: B, interrupt_t: Duration, transition_t: Duration) -> Self {
         let interrupt_v = a.sample(interrupt_t);
 
         let velocity = a
@@ -80,26 +100,22 @@ where
             )
             .map(|a| a * en::cast::<V::Component, _>(0.5 / SAMPLE_DELTA));
 
-        // linear should produce interrupt_v when sampled at interrupt_t
-        let start_v = interrupt_v.zip_map(
-            velocity.map(|v| v * en::cast::<V::Component, _>(interrupt_t.as_secs_f64())),
-            |i, v| i - v,
-        );
-        let linear = Linear::new(start_v, velocity);
+        let linear = Linear::new(interrupt_v, velocity);
 
-        Box::new(Self {
-            a: linear,
+        Self {
+            a: Some(a),
+            a_interrupt: linear,
             b,
             interrupt_t,
             transition_t,
-        })
+        }
     }
 }
 
-// Sampleable Linear animation from a point w/ a vector
+// Linear animation from a point w/ a vector
 #[derive(Debug)]
 pub struct Linear<V> {
-    value: V,
+    pub value: V,
     dt_value: V,
 }
 
