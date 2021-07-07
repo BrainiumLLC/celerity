@@ -70,10 +70,10 @@ pub trait BoundedAnimation<V: Animatable>: Animation<V> {
     ///
     /// If the other animation is also a `BoundedAnimation`, then the resulting
     /// animation is a `BoundedAnimation`.
-    fn chain<B>(self, other: B) -> Chain<Self, B, V>
+    fn chain<A>(self, other: A) -> Chain<Self, A, V>
     where
         Self: Sized,
-        B: Animation<V>,
+        A: Animation<V>,
     {
         Chain::new(self, other)
     }

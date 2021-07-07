@@ -4,21 +4,21 @@ use time_point::Duration;
 
 /// See [`BoundedAnimation::chain`] for details.
 #[derive(Debug)]
-pub struct Chain<A, B, V>
+pub struct Chain<B, A, V>
 where
-    A: BoundedAnimation<V>,
-    B: Animation<V>,
+    B: BoundedAnimation<V>,
+    A: Animation<V>,
     V: Animatable,
 {
-    a: A,
-    b: B,
+    a: B,
+    b: A,
     _marker: PhantomData<V>,
 }
 
-impl<A, B, V> Animation<V> for Chain<A, B, V>
+impl<B, A, V> Animation<V> for Chain<B, A, V>
 where
-    A: BoundedAnimation<V>,
-    B: Animation<V>,
+    B: BoundedAnimation<V>,
+    A: Animation<V>,
     V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
@@ -31,10 +31,10 @@ where
     }
 }
 
-impl<A, B, V> BoundedAnimation<V> for Chain<A, B, V>
+impl<A, B, V> BoundedAnimation<V> for Chain<B, A, V>
 where
-    A: BoundedAnimation<V>,
     B: BoundedAnimation<V>,
+    A: BoundedAnimation<V>,
     V: Animatable,
 {
     fn duration(&self) -> Duration {
@@ -42,13 +42,13 @@ where
     }
 }
 
-impl<A, B, V> Chain<A, B, V>
+impl<B, A, V> Chain<B, A, V>
 where
-    A: BoundedAnimation<V>,
-    B: Animation<V>,
+    B: BoundedAnimation<V>,
+    A: Animation<V>,
     V: Animatable,
 {
-    pub(crate) fn new(a: A, b: B) -> Self {
+    pub(crate) fn new(a: B, b: A) -> Self {
         Self {
             a,
             b,
