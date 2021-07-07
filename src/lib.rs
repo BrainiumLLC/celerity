@@ -40,6 +40,35 @@ pub trait Animation<V: Animatable>: Debug {
     /// - The result is unspecified if `elapsed` is negative.
     fn sample(&self, elapsed: Duration) -> V;
 
+    /// Allows you to use combinators on a mutable reference to an animation.
+    ///
+    /// This is typically only useful if you're using trait objects.
+    ///
+    /// # Warning
+    /// If `f` panics, then the program will abort.
+    ///
+    /// # Examples
+    /// ```
+    /// use celerity::{Animation as _, BoundedAnimation};
+    ///
+    /// struct Game {
+    ///     anim: Box<dyn BoundedAnimation<f32>>,
+    /// }
+    ///
+    /// impl Game {
+    ///     fn reverse(&mut self) {
+    ///         self.anim.replace_with(|anim| Box::new(anim.rev()));
+    ///     }
+    /// }
+    /// ```
+    fn replace_with<F>(&mut self, f: F)
+    where
+        Self: Sized,
+        F: FnOnce(Self) -> Self,
+    {
+        replace_with::replace_with_or_abort(self, f)
+    }
+
     /// Adapts this animation into a [`BoundedAnimation`] by snipping it at the
     /// specified duration.
     fn cutoff(self, duration: Duration) -> Cutoff<Self, V>
