@@ -116,3 +116,33 @@ pub trait BoundedAnimation<V: Animatable>: Animation<V> {
         self.clone().chain(self.rev())
     }
 }
+
+// impl<F, V> Animation<V> for F
+// where
+//     F: Fn(Duration) -> V,
+//     V: Animatable,
+// {
+//     fn sample(&self, elapsed: Duration) -> V {
+//         (*self)(elapsed)
+//     }
+// }
+
+impl<A, V> Animation<V> for Box<A>
+where
+    A: Animation<V> + ?Sized,
+    V: Animatable,
+{
+    fn sample(&self, elapsed: Duration) -> V {
+        A::sample(&*self, elapsed)
+    }
+}
+
+impl<A, V> BoundedAnimation<V> for Box<A>
+where
+    A: BoundedAnimation<V> + ?Sized,
+    V: Animatable,
+{
+    fn duration(&self) -> Duration {
+        A::duration(&*self)
+    }
+}
