@@ -7,6 +7,7 @@ use time_point::Duration;
 /// purpose is to demonstrate the properties of the most fundamental animation
 /// possible.
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct Constant<V>
 where
     V: Animatable,
