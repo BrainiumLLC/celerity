@@ -13,6 +13,7 @@ license = "Apache-2.0/MIT"
 bodymovin = { git = "https://github.com/BrainiumLLC/bodymovin-rs", branch = "main" }
 gee = { git = "https://github.com/BrainiumLLC/gee" }
 log = "0.4.11"
+paste = "1.0"
 rainbow = { git = "https://github.com/BrainiumLLC/rainbow", branch = "main" }
 replace_with = "0.1.7"
 thiserror = "1.0.24"

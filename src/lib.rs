@@ -10,6 +10,7 @@ pub mod interval;
 pub mod interval_track;
 mod lerp;
 pub mod spline;
+pub mod structured;
 
 pub use self::{combinators::*, component_wise::*, lerp::*};
 use gee::en;
