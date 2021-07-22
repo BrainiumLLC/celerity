@@ -24,7 +24,7 @@ pub fn linear_value<V: Animatable>(p0: &V, p1: &V, t0: f64, t1: f64, t: f64) -> 
 
 /// A value that can be animated.
 pub trait Animatable: Copy + Debug + ComponentWise {
-    /// Linearly interpolatables between two `Animatable`s.
+    /// Linearly interpolates between two `Animatable`s.
     fn lerp(self, other: Self, factor: f64) -> Self {
         self.zip_map(other, |a, b| lerp(a, b, factor))
     }
@@ -196,7 +196,6 @@ impl<C: en::Float> ComponentWise for gee::Angle<C> {
 
 impl<C: en::Float> Animatable for gee::Angle<C> {
     fn distance_to(self, other: Self) -> f64 {
-        // TODO: actually think about this
         (other.normalize().radians() - self.normalize().radians()).to_f64()
     }
 }
@@ -231,7 +230,6 @@ impl ComponentWise for rainbow::LinRgba {
 }
 
 impl Animatable for rainbow::LinRgba {
-    // TODO: have someone who actually understands math check this
     fn distance_to(self, other: Self) -> f64 {
         let [ar, ag, ab, aa] = self.into_f32_array();
         let [br, bg, bb, ba] = other.into_f32_array();
