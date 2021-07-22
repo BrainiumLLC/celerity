@@ -15,7 +15,7 @@ pub struct BezierEase {
 }
 
 impl BezierEase {
-    pub fn new(ox: f64, oy: f64, ix: f64, iy: f64) -> Self {
+    pub const fn new(ox: f64, oy: f64, ix: f64, iy: f64) -> Self {
         Self { ox, oy, ix, iy }
     }
 
@@ -28,16 +28,16 @@ impl BezierEase {
         (b0, b1, b2, b3)
     }
 
-    pub fn linear() -> Self {
+    pub const fn linear() -> Self {
         Self::new(0.16, 0.16, 0.84, 0.84)
     }
-    pub fn ease_in() -> Self {
+    pub const fn ease_in() -> Self {
         Self::new(0.16, 0.0, 0.84, 0.84)
     }
-    pub fn ease_out() -> Self {
+    pub const fn ease_out() -> Self {
         Self::new(0.16, 0.16, 0.84, 1.0)
     }
-    pub fn ease_in_out() -> Self {
+    pub const fn ease_in_out() -> Self {
         Self::new(0.16, 0.0, 0.84, 1.0)
     }
 
