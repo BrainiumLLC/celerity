@@ -30,23 +30,23 @@ impl<V: Animatable> IntervalTrack<V> {
         Self::new().with_intervals(intervals)
     }
 
-    pub fn from_duration_and_values(
-        start: Duration,
+    pub fn path(
         duration: Duration,
         values: Vec<V>,
+        bookend_style: BookendStyle,
         track_ease: Option<BezierEase>,
     ) -> Self {
         match values.len() {
             0 => IntervalTrack::new(),
-            1 => IntervalTrack::from_interval(Interval::hold(values[0])),
+            1 => IntervalTrack::from_interval(Interval::hold(values[0], Duration::zero())),
             2 => IntervalTrack::from_interval(Interval::transition(
-                Frame::new(start, values[0]),
-                Frame::new(start + duration, values[1]),
+                Frame::new(Duration::zero(), values[0]),
+                Frame::new(duration, values[1]),
                 track_ease,
             )),
             _ => {
                 // Add first/last values to refine animation path
-                let bookended_values = bookend(values, BookendStyle::Linear);
+                let bookended_values = bookend(values, bookend_style);
                 // Calculate BezierPath and SplineMap for each interval
                 let (paths, maps) = bookended_values_to_bezier_structs(&bookended_values);
                 // Calculate durations for each interval threshold
@@ -172,6 +172,8 @@ pub enum BookendStyle {
     Repeat,
     /// Linearly extrapolate using the first two and last two values
     Linear,
+    /// Use the starting/ending values to form a loop
+    Loop,
     /// Use the first/last three points to calculate a point that would loop back toward the second-to-first/last point
     Spiral,
 }
@@ -195,8 +197,17 @@ fn bookend<V: Animatable>(values: Vec<V>, style: BookendStyle) -> Vec<V> {
                     values.len()
                 );
                 let last_index = values.len() - 1;
-                let initial_bookend = values[0].sub(values[1]);
-                let final_bookend = values[last_index].sub(values[last_index - 1]);
+                let initial_bookend = values[0].add(values[0].sub(values[1]));
+                let final_bookend = values[last_index].add(values[last_index].sub(values[last_index - 1]));
+
+                std::iter::once(initial_bookend)
+                    .chain(values)
+                    .chain(std::iter::once(final_bookend))
+                    .collect()
+            }
+            BookendStyle::Loop => {
+                let initial_bookend = values[values.len()-2];
+                let final_bookend = values[1];
 
                 std::iter::once(initial_bookend)
                     .chain(values)
