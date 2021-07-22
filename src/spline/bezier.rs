@@ -3,7 +3,14 @@ use gee::en;
 use crate::Animatable;
 
 // Newton-Raphson iterations
-const NR_ITERATIONS: usize = 3;
+// Eases which approach a vertical slope at any point will
+// require a greater number of iterations. For most reasonable
+// curves, 3 iterations is fine, but up to 13 can be required
+// in the most extreme examples. It would be cool if this could be
+// calculated on a per-ease basis using slope somehow, as even 50
+// iterations aren't excessively time consuming, though the returns
+// on those computations diminish with less vertical curves.
+const NR_ITERATIONS: usize = 13;
 
 pub fn cubic_bezier_ease(ox: f64, oy: f64, ix: f64, iy: f64, t: f64) -> f64 {
     // Uses a cubic 2D bezier curve to map linear interpolation time
