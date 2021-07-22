@@ -84,10 +84,10 @@ impl<V: Animatable> Interval<V> {
         Self::new(a.offset, b.offset, a.value, b.value, None, None, None)
     }
 
-    pub fn hold(value: V) -> Self {
+    pub fn hold(value: V, duration: Duration) -> Self {
         Self::new(
             Duration::zero(),
-            Duration::zero(),
+            duration,
             value,
             value,
             None,
@@ -96,22 +96,9 @@ impl<V: Animatable> Interval<V> {
         )
     }
 
-    pub fn interrupt(
-        interrupt_t: Duration,
-        transition_t: Duration,
-        interrupt_v: V,
-        target: V,
-        ease: Option<BezierEase>,
-    ) -> Self {
-        Self::new(
-            interrupt_t,
-            interrupt_t + transition_t,
-            interrupt_v,
-            target,
-            ease,
-            None,
-            None,
-        )
+    // Create an "Animation" interval, which starts at 0
+    pub fn from_values(duration: Duration, from: V, to: V, ease: Option<BezierEase>) -> Self {
+        Self::new(Duration::zero(), duration, from, to, ease, None, None)
     }
 
     pub fn percent_elapsed(&self, elapsed: Duration) -> f64 {

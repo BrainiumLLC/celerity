@@ -39,7 +39,7 @@ impl<V> Constant<V>
 where
     V: Animatable,
 {
-    fn new(value: V) -> Self {
+    pub fn new(value: V) -> Self {
         Self { value }
     }
 }
