@@ -48,7 +48,7 @@ where
             // blend a_contribution and b_contribution
             let blended_contributions = a_contribution.zip_map(b_contribution, |a, b| {
                 let ac = a * en::cast::<V::Component, _>(1.0 - ease);
-                let bc = b;
+                let bc = b * en::cast::<V::Component, _>(ease);
                 ac + bc
             });
 
