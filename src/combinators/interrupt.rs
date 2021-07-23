@@ -18,6 +18,7 @@ where
     b: B,
     interrupt_t: Duration,
     transition_t: Duration,
+    pre_multiplied: bool,
 }
 
 impl<A, B, V> Animation<V> for Interrupt<A, B, V>
@@ -48,7 +49,11 @@ where
             // blend a_contribution and b_contribution
             let blended_contributions = a_contribution.zip_map(b_contribution, |a, b| {
                 let ac = a * en::cast::<V::Component, _>(1.0 - ease);
-                let bc = b * en::cast::<V::Component, _>(ease);
+                let bc = if self.pre_multiplied {
+                    b
+                } else {
+                    b * en::cast::<V::Component, _>(ease)
+                };
                 ac + bc
             });
 
@@ -102,12 +107,15 @@ where
 
         let linear = Linear::new(interrupt_v, velocity);
 
+        let pre_multiplied = b.sample(Duration::zero()).distance_to(interrupt_v) == 0.0;
+
         Self {
             a: Some(a),
             a_interrupt: linear,
             b,
             interrupt_t,
             transition_t,
+            pre_multiplied,
         }
     }
 }
