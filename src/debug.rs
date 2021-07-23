@@ -9,7 +9,7 @@ where
     A: Animation<V>,
     V: Animatable,
 {
-    (0..sample_count)
+    (0..sample_count + 1)
         .map(|i| anim.sample(sample_duration * (i.to_f64() / sample_count.to_f64())))
         .collect()
 }
