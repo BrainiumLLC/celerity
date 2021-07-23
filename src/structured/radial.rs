@@ -43,7 +43,7 @@ impl Radial {
                         Interval::from_values(
                             speed,
                             interrupt_v,
-                            interrupt_v + (Angle::PI() * 2.0),
+                            interrupt_v - (Angle::PI() * 2.0),
                             None,
                         ),
                         interrupt_t,
@@ -64,7 +64,7 @@ impl Radial {
                         Interval::from_values(
                             speed,
                             interrupt_v,
-                            interrupt_v - (Angle::PI() * 2.0),
+                            interrupt_v + (Angle::PI() * 2.0),
                             None,
                         ),
                         interrupt_t,
