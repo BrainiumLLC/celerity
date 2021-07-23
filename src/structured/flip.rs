@@ -1,11 +1,6 @@
-use std::f32::consts::{PI, TAU};
-
 use crate::{
-    constant::Constant,
-    interval::{Frame, Interval},
-    retarget_function,
-    spline::bezier_ease::BezierEase,
-    Animatable, Animation, BoundedAnimation,
+    constant::Constant, interval::Interval, retarget_function, spline::bezier_ease::BezierEase,
+    Animation,
 };
 
 use gee::{Angle, Point, Transform, Transform3d};

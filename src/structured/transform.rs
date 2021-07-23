@@ -1,4 +1,4 @@
-use crate::interval::{Frame, Interval};
+use crate::interval::Interval;
 use crate::spline::bezier_ease::BezierEase;
 use crate::Animation;
 use gee::{Angle, Transform, Vector};

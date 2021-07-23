@@ -1,10 +1,6 @@
-use std::f32::consts::PI;
-
 use crate::{
-    constant::Constant,
-    interval::Interval,
-    spline::bezier_ease::{self, BezierEase},
-    Animation, BoundedAnimation,
+    constant::Constant, interval::Interval, spline::bezier_ease::BezierEase, Animation,
+    BoundedAnimation,
 };
 
 use gee::{Angle, Circle, Point};
