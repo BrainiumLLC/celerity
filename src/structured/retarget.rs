@@ -12,7 +12,7 @@ macro_rules! retarget_function {
         ) {
             let interrupt_v = self.$anim.sample(interrupt_t);
 
-            replace_with::replace_with_or_abort(&mut self.$anim, |anim| {
+            self.$anim.replace_with(|anim| {
                 Box::new(anim.interrupt(
                     Interval::from_values(transition_t, interrupt_v, target, ease),
                     interrupt_t,
