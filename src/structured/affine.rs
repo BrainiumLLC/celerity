@@ -22,9 +22,8 @@ impl AffineAnimation {
 
     pub fn sample(&self, elapsed: Duration) -> Transform<f32> {
         let position = self.position.sample(elapsed);
-
         self.transform
-            .sample_transform(elapsed)
+            .sample(elapsed)
             .pre_translate(-position.x, -position.y)
             .post_translate(position.x, position.y)
     }

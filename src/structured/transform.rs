@@ -1,7 +1,7 @@
 use crate::interval::Interval;
 use crate::spline::bezier_ease::BezierEase;
 use crate::Animation;
-use gee::{Angle, Transform, Vector};
+use gee::{Angle, DecomposedTransform, Transform, Vector};
 
 use time_point::Duration;
 
@@ -24,9 +24,18 @@ impl TransformAnimation {
         to: Transform<f32>,
         ease: Option<BezierEase>,
     ) -> Self {
-        let (ta, ra, ka, sa) = from.decompose();
-        let (tb, rb, kb, sb) = to.decompose();
-
+        let DecomposedTransform {
+            translation: ta,
+            rotation: ra,
+            skew: ka,
+            scale: sa,
+        } = from.decompose();
+        let DecomposedTransform {
+            translation: tb,
+            rotation: rb,
+            skew: kb,
+            scale: sb,
+        } = to.decompose();
         Self {
             translate: Box::new(Interval::new(
                 start,
@@ -68,17 +77,22 @@ impl TransformAnimation {
     }
 
     pub fn identity() -> Self {
+        let identity = DecomposedTransform::identity();
         Self {
-            translate: Box::new(Interval::hold(Vector::zero(), Duration::zero())),
-            rotate: Box::new(Interval::hold(Angle::ZERO(), Duration::zero())),
-            scale: Box::new(Interval::hold(Vector::new(1.0, 1.0), Duration::zero())),
-            skew: Box::new(Interval::hold(Angle::ZERO(), Duration::zero())),
+            translate: Box::new(Interval::hold(identity.translation, Duration::zero())),
+            rotate: Box::new(Interval::hold(identity.rotation, Duration::zero())),
+            scale: Box::new(Interval::hold(identity.scale, Duration::zero())),
+            skew: Box::new(Interval::hold(identity.skew, Duration::zero())),
         }
     }
 
     pub fn hold(value: Transform<f32>) -> Self {
-        let (translation, rotation, skew, scale) = value.decompose();
-
+        let DecomposedTransform {
+            translation,
+            rotation,
+            skew,
+            scale,
+        } = value.decompose();
         Self {
             translate: Box::new(Interval::hold(translation, Duration::zero())),
             rotate: Box::new(Interval::hold(rotation, Duration::zero())),
@@ -99,8 +113,12 @@ impl TransformAnimation {
         target: Transform<f32>,
         ease: Option<BezierEase>,
     ) {
-        let (translation, rotation, skew, scale) = target.decompose();
-
+        let DecomposedTransform {
+            translation,
+            rotation,
+            skew,
+            scale,
+        } = target.decompose();
         self.translate(interrupt_t, transition_t, translation, ease.clone());
         self.rotate(interrupt_t, transition_t, rotation, ease.clone());
         self.scale(interrupt_t, transition_t, scale, ease.clone());
@@ -108,21 +126,11 @@ impl TransformAnimation {
     }
 
     pub fn sample(&self, elapsed: Duration) -> Transform<f32> {
-        Transform::<f32>::from_decomposition(
-            self.translate.sample(elapsed),
-            self.rotate.sample(elapsed),
-            self.skew.sample(elapsed),
-            self.scale.sample(elapsed),
-        )
-        .into()
-    }
-
-    pub fn sample_transform(&self, elapsed: Duration) -> Transform<f32> {
-        Transform::<f32>::from_decomposition(
-            self.translate.sample(elapsed),
-            self.rotate.sample(elapsed),
-            self.skew.sample(elapsed),
-            self.scale.sample(elapsed),
-        )
+        Transform::from_decomposed(DecomposedTransform {
+            translation: self.translate.sample(elapsed),
+            rotation: self.rotate.sample(elapsed),
+            skew: self.skew.sample(elapsed),
+            scale: self.scale.sample(elapsed),
+        })
     }
 }

@@ -85,21 +85,20 @@ impl Transform {
 
     pub fn sample_transform(&self, elapsed: Duration) -> gee::Transform<f64> {
         let anchor_point = self.anchor_point.sample(elapsed);
-        let position = self.position.sample(elapsed);
+        let translation = self.position.sample(elapsed);
         let rotation = self.rotation.sample(elapsed);
         let skew = self.skew.sample(elapsed);
         // scale is a percentage!
         let scale = self.scale.sample(elapsed) / gee::Vector::uniform(100.0);
-        log::info!(
-            "sampled transform components: position `{:?}`, rotation `{:?}`, skew `{:?}`, and scale `{:?}`",
-            position,
+        let transform = gee::DecomposedTransform {
+            translation,
             rotation,
             skew,
             scale,
-        );
+        };
+        log::info!("sampled transform components: `{:#?}`", transform,);
         // TODO: what to do with skew_axis?
-        gee::Transform::from_decomposition(position, rotation, skew, scale)
-            .pre_translate_vector(-anchor_point)
+        gee::Transform::from_decomposed(transform).pre_translate_vector(-anchor_point)
     }
 
     pub fn sample_opacity(&self, elapsed: Duration) -> f64 {

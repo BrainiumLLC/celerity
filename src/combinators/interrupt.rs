@@ -1,6 +1,4 @@
-use crate::{
-    interval::Interval, spline::bezier_ease::BezierEase, Animatable, Animation, BoundedAnimation,
-};
+use crate::{spline::bezier_ease::BezierEase, Animatable, Animation, BoundedAnimation};
 use gee::en;
 use time_point::Duration;
 
