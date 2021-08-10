@@ -30,6 +30,12 @@ impl Scene {
             .and_then(Self::from_bodymovin)
     }
 
+    pub fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<Self, Error> {
+        bodymovin::Bodymovin::from_bytes(bytes)
+            .map_err(Error::from)
+            .and_then(Self::from_bodymovin)
+    }
+
     pub fn from_bodymovin(
         bodymovin::Bodymovin {
             width,
