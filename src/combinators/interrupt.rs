@@ -50,7 +50,7 @@ where
                 let bc = if self.pre_multiplied {
                     b
                 } else {
-                    b * en::cast::<V::Component, _>(ease)
+                    b * V::cast_component(ease)
                 };
                 ac + bc
             });
