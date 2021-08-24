@@ -4,7 +4,6 @@ pub mod after_effects;
 mod combinators;
 mod component_wise;
 pub mod constant;
-pub mod debug;
 pub mod function;
 pub mod interval;
 pub mod interval_track;
@@ -13,7 +12,7 @@ pub mod spline;
 pub mod structured;
 
 pub use self::{combinators::*, component_wise::*, lerp::*};
-use gee::en;
+use gee::en::{self, Num};
 use std::fmt::Debug;
 use time_point::{Duration, TimePoint};
 
@@ -90,6 +89,43 @@ pub trait Animation<V: Animatable>: Debug {
         A: Animation<V>,
     {
         Interrupt::new(self.cutoff(interrupt_t), other, interrupt_t, transition_t)
+    }
+
+    fn path(&self, sample_count: usize, sample_duration: Duration) -> Vec<V> {
+        (0..sample_count + 1)
+            .map(|i| self.sample(sample_duration * (i.to_f64() / sample_count.to_f64())))
+            .collect()
+    }
+
+    // Sampling error can occur arround tight curves, showing reduced velocity
+    fn velocity(&self, sample_count: usize, sample_duration: Duration) -> Vec<V> {
+        let sample_delta = sample_duration.as_secs_f64() / sample_count.to_f64();
+        self.path(sample_count + 1, sample_duration)
+            .windows(2)
+            .map(|window| {
+                window[1].zip_map(window[0], |a, b| {
+                    (a - b) / V::cast_component::<f64>(sample_delta)
+                })
+            })
+            .collect()
+    }
+
+    // Velocity in units/second
+    fn sample_velocity(&self, elapsed: Duration, delta: f64) -> V {
+        let inverse_delta = 1.0 / delta;
+        let a = self.sample(elapsed - Duration::from_secs_f64(delta));
+        let b = self.sample(elapsed + Duration::from_secs_f64(delta));
+
+        b.sub(a)
+            .map(|r| r * V::cast_component::<f64>(inverse_delta))
+    }
+
+    // Highly sensitive to sampling errors in velocity
+    fn acceleration(&self, sample_count: usize, sample_duration: Duration) -> Vec<V> {
+        self.velocity(sample_count + 1, sample_duration)
+            .windows(2)
+            .map(|window| window[1].zip_map(window[0], |a, b| a - b))
+            .collect()
     }
 }
 

@@ -1,5 +1,4 @@
 use crate::{
-    debug,
     spline::{
         bezier::{cubic_bezier, cubic_bezier_ease, fixed_bezier},
         bezier_ease::BezierEase,
@@ -127,7 +126,7 @@ impl<V: Animatable> Interval<V> {
         InspectInterval {
             start: self.start,
             end: self.end,
-            path: debug::path(self, detail, self.end - self.start),
+            path: self.path(detail, self.end - self.start),
             ease: match &self.ease {
                 Some(ease) => sample_ease(ease),
                 None => vec![(0.0, 0.0), (1.0, 1.0)],
