@@ -196,7 +196,12 @@ impl<C: en::Float> ComponentWise for gee::Angle<C> {
 
 impl<C: en::Float> Animatable for gee::Angle<C> {
     fn distance_to(self, other: Self) -> f64 {
-        (other.normalize().radians() - self.normalize().radians()).to_f64()
+        let distance = (other.normalize().radians() - self.normalize().radians())
+            .abs()
+            .to_f64();
+        (distance > std::f64::consts::PI)
+            .then(|| std::f64::consts::TAU - distance)
+            .unwrap_or(distance)
     }
 }
 
