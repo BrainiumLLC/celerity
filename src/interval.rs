@@ -30,7 +30,7 @@ pub struct Interval<V: Animatable> {
     pub to: V,
     pub ease: Option<BezierEase>,
     pub path: Option<BezierPath<V>>,
-    pub metric: Option<SplineMap>,
+    pub reticulated_spline: Option<SplineMap>,
 }
 
 #[derive(Clone, Debug)]
@@ -39,7 +39,7 @@ pub struct InspectInterval<V: Animatable> {
     pub end: Duration,
     pub ease: Vec<(f64, f64)>,
     pub path: Vec<V>,
-    pub metric: Option<Vec<(f64, f64)>>,
+    pub reticulated_spline: Option<Vec<(f64, f64)>>,
 }
 
 impl<V: Animatable> Interval<V> {
@@ -50,7 +50,7 @@ impl<V: Animatable> Interval<V> {
         to: V,
         ease: Option<BezierEase>,
         path: Option<BezierPath<V>>,
-        metric: Option<SplineMap>,
+        reticulated_spline: Option<SplineMap>,
     ) -> Self {
         Self {
             start,
@@ -59,7 +59,7 @@ impl<V: Animatable> Interval<V> {
             to,
             ease,
             path,
-            metric,
+            reticulated_spline,
         }
     }
 
@@ -84,18 +84,9 @@ impl<V: Animatable> Interval<V> {
     }
 
     pub fn hold(value: V, duration: Duration) -> Self {
-        Self::new(
-            Duration::zero(),
-            duration,
-            value,
-            value,
-            None,
-            None,
-            None, // Is it possible to have a splinemap without a path?
-        )
+        Self::new(Duration::zero(), duration, value, value, None, None, None)
     }
 
-    // Create an "Animation" interval, which starts at 0
     pub fn from_values(duration: Duration, from: V, to: V, ease: Option<BezierEase>) -> Self {
         Self::new(Duration::zero(), duration, from, to, ease, None, None)
     }
@@ -107,6 +98,18 @@ impl<V: Animatable> Interval<V> {
             (elapsed.clamp(self.start, self.end) - self.start)
                 .div_duration_f64(self.end - self.start)
         }
+    }
+
+    pub fn length(&self) -> f64 {
+        if let Some(splinemap) = &self.reticulated_spline {
+            splinemap.length
+        } else {
+            self.from.distance_to(self.to)
+        }
+    }
+
+    pub fn average_speed(&self) -> f64 {
+        self.length() / self.duration().as_secs_f64()
     }
 
     #[allow(dead_code)]
@@ -131,15 +134,10 @@ impl<V: Animatable> Interval<V> {
                 Some(ease) => sample_ease(ease),
                 None => vec![(0.0, 0.0), (1.0, 1.0)],
             },
-            metric: self.metric.as_ref().map(|metric| metric.steps.to_vec()),
-        }
-    }
-
-    pub fn average_speed(&self) -> f64 {
-        if let Some(splinemap) = &self.metric {
-            splinemap.length / self.duration().as_secs_f64()
-        } else {
-            self.from.distance_to(self.to) / self.duration().as_secs_f64()
+            reticulated_spline: self
+                .reticulated_spline
+                .as_ref()
+                .map(|reticulated_spline| reticulated_spline.steps.to_vec()),
         }
     }
 }
@@ -156,7 +154,7 @@ impl<V: Animatable> Animation<V> for Interval<V> {
 
         // Map eased distance to spline time using spline map (or not)
         let spline_time = self
-            .metric
+            .reticulated_spline
             .as_ref()
             .map(|m| spline_ease(&m, eased_time))
             .unwrap_or(eased_time);

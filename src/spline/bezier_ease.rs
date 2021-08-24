@@ -90,7 +90,7 @@ mod tests {
             to,
             ease: None,
             path: None,
-            metric: None,
+            reticulated_spline: None,
         };
 
         let track = IntervalTrack::new().with_interval(interval);
@@ -126,7 +126,7 @@ mod tests {
                 iy: 1.0,
             }),
             path: None,
-            metric: None,
+            reticulated_spline: None,
         };
 
         let track = IntervalTrack::new().with_interval(interval);
@@ -170,7 +170,7 @@ mod tests {
                 iy: 1.0,
             }),
             path: None,
-            metric: None,
+            reticulated_spline: None,
         };
 
         let track = IntervalTrack::new().with_interval(interval);
@@ -219,7 +219,7 @@ mod tests {
             to,
             ease: None,
             path: Some(BezierPath { b1, b2 }),
-            metric: Some(spline_map),
+            reticulated_spline: Some(spline_map),
         };
 
         let track = IntervalTrack::new().with_interval(interval);
@@ -273,7 +273,7 @@ mod tests {
                 iy: 1.0,
             }),
             path: Some(BezierPath { b1, b2 }),
-            metric: Some(spline_map),
+            reticulated_spline: Some(spline_map),
         };
 
         let track = IntervalTrack::new().with_interval(interval);

@@ -16,41 +16,47 @@ pub struct SplineMap {
     // Animatable always lerps using f64, and distance is always an f64
     pub steps: Vec<(f64, f64)>,
     pub length: f64,
+    rectify: bool,
 }
 
 // Look up linear easing by arc length using a spline map
 
 pub fn spline_ease(spline_map: &SplineMap, t: f64) -> f64 {
-    // Convert t 0..1 to arc length 0..d
-    let elapsed_distance = t * spline_map.length;
+    spline_map
+        .rectify
+        .then(|| {
+            // Convert t 0..1 to arc length 0..d
+            let elapsed_distance = t * spline_map.length;
 
-    // Find closest interval
-    let len = spline_map.steps.len();
-    let i = usize::min(len - 2, find_index(spline_map, elapsed_distance));
-    let start = spline_map.steps[i];
-    let end = spline_map.steps[i + 1];
+            // Find closest interval
+            let len = spline_map.steps.len();
+            let i = usize::min(len - 2, find_index(spline_map, elapsed_distance));
+            let start = spline_map.steps[i];
+            let end = spline_map.steps[i + 1];
 
-    // Use chordal catmull-rom if we have a window of 4 steps.
-    // This reduces jitter by an order of magnitude.
-    if i > 0 && i < spline_map.steps.len() - 2 {
-        let prev = spline_map.steps[i - 1];
-        let next = spline_map.steps[i + 2];
-        catmull_rom_value(
-            &prev.0,
-            &start.0,
-            &end.0,
-            &next.0,
-            prev.1,
-            start.1,
-            end.1,
-            next.1,
-            elapsed_distance,
-        )
-    } else {
-        // Lerp steps[i] and steps[i+1]
-        // (will only be used if easing beyond the start or end)
-        linear_value(&start.0, &end.0, start.1, end.1, elapsed_distance)
-    }
+            // Use chordal catmull-rom if we have a window of 4 steps.
+            // This reduces jitter by an order of magnitude.
+            if i > 0 && i < spline_map.steps.len() - 2 {
+                let prev = spline_map.steps[i - 1];
+                let next = spline_map.steps[i + 2];
+                catmull_rom_value(
+                    &prev.0,
+                    &start.0,
+                    &end.0,
+                    &next.0,
+                    prev.1,
+                    start.1,
+                    end.1,
+                    next.1,
+                    elapsed_distance,
+                )
+            } else {
+                // Lerp steps[i] and steps[i+1]
+                // (will only be used if easing beyond the start or end)
+                linear_value(&start.0, &end.0, start.1, end.1, elapsed_distance)
+            }
+        })
+        .unwrap_or(t)
 }
 
 // Find index for lookup in spline map with binary search.
@@ -75,7 +81,7 @@ impl SplineMap {
     // Make a spline map to map "spline time" 0..1 to arc length 0..d.
     // Integrates with Euler's rule.
 
-    pub fn from_spline<V: Animatable, F: Fn(f64) -> V>(f: F) -> SplineMap {
+    pub fn from_spline<V: Animatable, F: Fn(f64) -> V>(f: F, rectify: bool) -> SplineMap {
         let mut steps = Vec::new();
         let mut length: f64 = 0.0;
         let mut point = f(0.0);
@@ -100,14 +106,18 @@ impl SplineMap {
         // Ignore one point after
         length = steps[steps.len() - 2].1;
 
-        SplineMap { steps, length }
+        SplineMap {
+            steps,
+            length,
+            rectify,
+        }
     }
 
     // Make a spline map from a cubic bezier to map "spline time" 0..1 to arc length 0..d.
     // Uses analytic derivatives and simpson's rule for more accurate integration.
     // (only makes a difference for strongly cusped curves)
 
-    pub fn from_bezier<V: Animatable>(b0: &V, b1: &V, b2: &V, b3: &V) -> SplineMap {
+    pub fn from_bezier<V: Animatable>(b0: &V, b1: &V, b2: &V, b3: &V, rectify: bool) -> SplineMap {
         let mut steps = Vec::new();
         let mut length: f64 = 0.0;
         let zero = b0.map(|_| V::Component::zero());
@@ -148,7 +158,11 @@ impl SplineMap {
         // Ignore one point after
         length = steps[steps.len() - 2].1;
 
-        SplineMap { steps, length }
+        SplineMap {
+            steps,
+            length,
+            rectify,
+        }
     }
 }
 

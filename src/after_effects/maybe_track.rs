@@ -59,7 +59,7 @@ impl<V: FromValue> Interval<V> {
             to: to_value,
             ease: from.bezier.clone().map(Into::into),
             path: None,
-            metric: None,
+            reticulated_spline: None,
         })
     }
 }
@@ -82,7 +82,7 @@ impl<V: FromMultiDimensional> Interval<V> {
             to: to_value,
             ease: from.bezier.clone().map(Into::into),
             path: None,
-            metric: None,
+            reticulated_spline: None,
         })
     }
 }

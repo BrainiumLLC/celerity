@@ -35,6 +35,7 @@ impl<V: Animatable> IntervalTrack<V> {
         values: Vec<V>,
         bookend_style: BookendStyle,
         track_ease: Option<BezierEase>,
+        rectify: bool,
     ) -> Self {
         match values.len() {
             0 => IntervalTrack::new(),
@@ -48,7 +49,7 @@ impl<V: Animatable> IntervalTrack<V> {
                 // Add first/last values to refine animation path
                 let bookended_values = bookend(values, bookend_style);
                 // Calculate BezierPath and SplineMap for each interval
-                let (paths, maps) = bookended_values_to_bezier_structs(&bookended_values);
+                let (paths, maps) = bookended_values_to_bezier_structs(&bookended_values, rectify);
                 // Calculate durations for each interval threshold
                 let durations = constant_velocity_durations(&accumulate_lengths(&maps), duration);
 
@@ -77,7 +78,6 @@ impl<V: Animatable> IntervalTrack<V> {
     }
 
     pub fn auto_bezier(frames: Vec<Frame<V>>) -> Self {
-        // TODO: How to get rid of this?
         let mut acc_elapsed = Duration::zero();
 
         Self::from_intervals(bookend_frames(frames, BookendStyle::Repeat).windows(4).map(
@@ -96,7 +96,7 @@ impl<V: Animatable> IntervalTrack<V> {
                     window[2].value,
                     None,
                     Some(BezierPath::new(b1, b2)),
-                    Some(SplineMap::from_bezier(&b0, &b1, &b2, &b3)),
+                    Some(SplineMap::from_bezier(&b0, &b1, &b2, &b3, true)),
                 )
             },
         ))
@@ -134,6 +134,12 @@ impl<V: Animatable> IntervalTrack<V> {
             .iter()
             .find(|interval| interval.end > *elapsed)
             .or_else(|| self.intervals.last())
+    }
+
+    pub fn length(&self) -> f64 {
+        self.intervals
+            .iter()
+            .fold(0.0, |acc, interval| acc + interval.length())
     }
 }
 
@@ -198,7 +204,8 @@ fn bookend<V: Animatable>(values: Vec<V>, style: BookendStyle) -> Vec<V> {
                 );
                 let last_index = values.len() - 1;
                 let initial_bookend = values[0].add(values[0].sub(values[1]));
-                let final_bookend = values[last_index].add(values[last_index].sub(values[last_index - 1]));
+                let final_bookend =
+                    values[last_index].add(values[last_index].sub(values[last_index - 1]));
 
                 std::iter::once(initial_bookend)
                     .chain(values)
@@ -206,7 +213,7 @@ fn bookend<V: Animatable>(values: Vec<V>, style: BookendStyle) -> Vec<V> {
                     .collect()
             }
             BookendStyle::Loop => {
-                let initial_bookend = values[values.len()-2];
+                let initial_bookend = values[values.len() - 2];
                 let final_bookend = values[1];
 
                 std::iter::once(initial_bookend)
@@ -249,6 +256,7 @@ fn bookend_frames<V: Animatable>(frames: Vec<Frame<V>>, style: BookendStyle) -> 
 
 fn bookended_values_to_bezier_structs<V: Animatable>(
     values: &Vec<V>,
+    rectify: bool,
 ) -> (Vec<BezierPath<V>>, Vec<SplineMap>) {
     values
         .windows(4)
@@ -257,7 +265,7 @@ fn bookended_values_to_bezier_structs<V: Animatable>(
                 centripetal_catmull_rom_to_bezier(&window[0], &window[1], &window[2], &window[3]);
             (
                 BezierPath::new(b1, b2),
-                SplineMap::from_bezier(&b0, &b1, &b2, &b3),
+                SplineMap::from_bezier(&b0, &b1, &b2, &b3, rectify),
             )
         })
         .unzip()
