@@ -40,14 +40,13 @@ impl PathAnimation {
     }
 
     pub fn sample_transform(&self, elapsed: Duration, sample_delta: Duration) -> Transform<f32> {
-        let position = self.sample_position(elapsed);
-        let velocity = self.position.sample_velocity(elapsed, 0.0001);
-        Transform::from_rotation(self.get_angle(elapsed, sample_delta))
-            .pre_translate(-position.x, -position.y)
-            .post_translate(position.x, position.y)
+        Transform::from_rotation_with_fixed_point(
+            self.get_angle(elapsed, sample_delta),
+            self.sample_position(elapsed),
+        )
     }
 
-    pub fn get_angle(&self, elapsed: Duration, sample_delta: Duration) -> Angle<f32> {
+    pub fn get_angle(&self, elapsed: Duration, sample_delta: Duration) -> Angle {
         match self.style {
             RotationStyle::NoRotation => self.angle.sample(elapsed),
             RotationStyle::FollowPath => {
@@ -73,7 +72,7 @@ impl PathAnimation {
                     })
                     .unwrap_or(front_angle_difference * -1.0);
 
-                Angle::from_radians((shortest_delta * 1.15).to_f32())
+                Angle::from_radians(shortest_delta * 1.15).to_f32()
                     + back_angle
                     + self.angle.sample(elapsed)
             }
