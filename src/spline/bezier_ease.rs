@@ -207,7 +207,7 @@ mod tests {
         let b2: gee::Point<f64> = gee::Point::new(4.0, 4.0);
 
         //let spline_map = SplineMap::from_spline(|t| cubic_bezier(&from, &b1, &b2, &to, t));
-        let spline_map = SplineMap::from_bezier(&from, &b1, &b2, &to);
+        let spline_map = SplineMap::from_bezier(&from, &b1, &b2, &to, true);
 
         let length = spline_map.length;
         println!("length {}", length);
@@ -256,7 +256,7 @@ mod tests {
         let b2: gee::Point<f64> = gee::Point::new(4.0, 4.0);
 
         //let spline_map = SplineMap::from_spline(|t| cubic_bezier(&from, &b1, &b2, &to, t));
-        let spline_map = SplineMap::from_bezier(&from, &b1, &b2, &to);
+        let spline_map = SplineMap::from_bezier(&from, &b1, &b2, &to, true);
 
         let length = spline_map.length;
         println!("length {}", length);

@@ -208,8 +208,8 @@ mod tests {
         let b1 = (50f64, -50f64);
         let b2 = (100f64, 100f64);
         let b3 = (150f64, 0f64);
-        let spline_map = SplineMap::from_spline(|t| cubic_bezier(&b0, &b1, &b2, &b3, t));
-        let bezier_map = SplineMap::from_bezier(&b0, &b1, &b2, &b3);
+        let spline_map = SplineMap::from_spline(|t| cubic_bezier(&b0, &b1, &b2, &b3, t), true);
+        let bezier_map = SplineMap::from_bezier(&b0, &b1, &b2, &b3, true);
         let tolerance = MATCH_TOLERANCE * spline_map.length;
         let mut i = 0;
         for &s1 in spline_map.steps.iter() {
@@ -227,7 +227,7 @@ mod tests {
         let b1 = (50f64, -50f64);
         let b2 = (100f64, 100f64);
         let b3 = (150f64, 0f64);
-        let spline_map = SplineMap::from_spline(|t| cubic_bezier(&b0, &b1, &b2, &b3, t));
+        let spline_map = SplineMap::from_spline(|t| cubic_bezier(&b0, &b1, &b2, &b3, t), true);
 
         test_with_spline_map(&spline_map, &b0, &b1, &b2, &b3, 100, 1e-3);
         test_with_spline_map(&spline_map, &b0, &b1, &b2, &b3, 20, 1e-3);
@@ -239,7 +239,7 @@ mod tests {
         let b1 = (50f64, -50f64);
         let b2 = (100f64, 100f64);
         let b3 = (150f64, 0f64);
-        let spline_map = SplineMap::from_bezier(&b0, &b1, &b2, &b3);
+        let spline_map = SplineMap::from_bezier(&b0, &b1, &b2, &b3, true);
 
         test_with_spline_map(&spline_map, &b0, &b1, &b2, &b3, 100, 1e-3);
         test_with_spline_map(&spline_map, &b0, &b1, &b2, &b3, 20, 1e-3);
@@ -251,7 +251,7 @@ mod tests {
         let b1 = (50f64, -50f64);
         let b2 = (350f64, 100f64);
         let b3 = (150f64, 0f64);
-        let spline_map = SplineMap::from_spline(|t| cubic_bezier(&b0, &b1, &b2, &b3, t));
+        let spline_map = SplineMap::from_spline(|t| cubic_bezier(&b0, &b1, &b2, &b3, t), true);
 
         test_with_spline_map(&spline_map, &b0, &b1, &b2, &b3, 100, 3e-2);
         test_with_spline_map(&spline_map, &b0, &b1, &b2, &b3, 20, 3e-2);
@@ -263,7 +263,7 @@ mod tests {
         let b1 = (50f64, -50f64);
         let b2 = (350f64, 100f64);
         let b3 = (150f64, 0f64);
-        let spline_map = SplineMap::from_bezier(&b0, &b1, &b2, &b3);
+        let spline_map = SplineMap::from_bezier(&b0, &b1, &b2, &b3, true);
 
         test_with_spline_map(&spline_map, &b0, &b1, &b2, &b3, 100, 1e-2);
         test_with_spline_map(&spline_map, &b0, &b1, &b2, &b3, 20, 1e-2);
