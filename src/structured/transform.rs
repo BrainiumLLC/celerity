@@ -5,7 +5,7 @@ use gee::{Angle, DecomposedTransform, Transform, Vector};
 
 use time_point::Duration;
 
-use crate::retarget_function;
+use crate::retargetable;
 
 // TransformAnimation: Working with Affine transformations
 #[derive(Debug)]
@@ -101,10 +101,10 @@ impl TransformAnimation {
         }
     }
 
-    retarget_function!(translate, Vector<f32>);
-    retarget_function!(rotate, Angle<f32>);
-    retarget_function!(scale, Vector<f32>);
-    retarget_function!(skew, Angle<f32>);
+    retargetable!(translate, Animation, Vector<f32>);
+    retargetable!(rotate, Animation, Angle<f32>);
+    retargetable!(scale, Animation, Vector<f32>);
+    retargetable!(skew, Animation, Angle<f32>);
 
     pub fn retarget(
         &mut self,

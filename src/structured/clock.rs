@@ -7,7 +7,7 @@ use time_point::Duration;
 
 use replace_with::replace_with_or_abort;
 
-use crate::retarget_function;
+use crate::retargetable;
 
 const TRANSITION_TIME: f64 = 0.5;
 
@@ -108,5 +108,5 @@ impl Clock {
         });
     }
 
-    retarget_function!(rate_of_travel, f64);
+    retargetable!(rate_of_travel, Animation, f64);
 }

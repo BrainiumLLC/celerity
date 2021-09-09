@@ -1,5 +1,5 @@
 use crate::{
-    interval::Interval, retarget_function, spline::bezier_ease::BezierEase,
+    interval::Interval, retargetable, spline::bezier_ease::BezierEase,
     structured::transform::TransformAnimation, Animation,
 };
 use gee::{Point, Transform};
@@ -39,5 +39,5 @@ impl AffineAnimation {
             .retarget(interrupt_t, transition_t, target, ease);
     }
 
-    retarget_function!(position, Point<f32>);
+    retargetable!(position, Animation, Point<f32>);
 }

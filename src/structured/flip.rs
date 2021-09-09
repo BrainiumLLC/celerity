@@ -1,5 +1,5 @@
 use crate::{
-    constant::Constant, interval::Interval, retarget_function, spline::bezier_ease::BezierEase,
+    constant::Constant, interval::Interval, retargetable, spline::bezier_ease::BezierEase,
     Animation,
 };
 
@@ -109,8 +109,8 @@ impl FlipAnimation {
         }
     }
 
-    retarget_function!(position, Point<f32>);
-    retarget_function!(angle, Angle<f32>);
-    retarget_function!(flip, Angle<f32>);
-    retarget_function!(scale, f32);
+    retargetable!(position, Animation, Point<f32>);
+    retargetable!(angle, Animation, Angle<f32>);
+    retargetable!(flip, Animation, Angle<f32>);
+    retargetable!(scale, Animation, f32);
 }

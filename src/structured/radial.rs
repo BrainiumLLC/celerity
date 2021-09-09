@@ -9,7 +9,7 @@ use time_point::Duration;
 
 use replace_with::replace_with_or_abort;
 
-use crate::retarget_function;
+use crate::retargetable;
 
 // Radial: A fun test for Celerity
 // An animation which travels around a circle, varying its angle and distance from an origin point
@@ -95,9 +95,9 @@ impl Radial {
         });
     }
 
-    retarget_function!(distance, f32);
-    retarget_function!(origin, Point<f32>);
-    retarget_function!(angle, Angle<f32>);
+    retargetable!(distance, Animation, f32);
+    retargetable!(origin, Animation, Point<f32>);
+    retargetable!(angle, Animation, Angle<f32>);
 }
 
 impl Animation<Point<f32>> for Radial {
