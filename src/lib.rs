@@ -13,6 +13,7 @@ pub mod structured;
 
 pub use self::{combinators::*, component_wise::*, lerp::*};
 use gee::en::{self, Num};
+pub use paste;
 use std::fmt::Debug;
 use time_point::{Duration, TimePoint};
 
