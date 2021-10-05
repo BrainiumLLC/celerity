@@ -1,5 +1,9 @@
 use crate::{
-    constant::Constant, interval::Interval, retargetable, spline::bezier_ease::BezierEase,
+    constant::Constant,
+    interval::Interval,
+    interval_track::{BookendStyle, IntervalTrack},
+    retargetable,
+    spline::bezier_ease::BezierEase,
     Animation,
 };
 use gee::{en::Num, Angle, Point, Transform};
@@ -27,10 +31,35 @@ pub struct PathAnimation {
 }
 
 impl PathAnimation {
-    pub fn from_values(position: Point<f32>, angle: Angle<f32>, style: RotationStyle) -> Self {
+    pub fn new(position: Point<f32>, angle: Angle<f32>, style: RotationStyle) -> Self {
         Self {
             position: Box::new(Constant::new(position)),
             angle: Box::new(Constant::new(angle)),
+            style,
+        }
+    }
+
+    pub fn from_values(
+        duration: Duration,
+        points: Vec<Point>,
+        angles: Vec<Angle>,
+        style: RotationStyle,
+    ) -> Self {
+        Self {
+            position: Box::new(IntervalTrack::path(
+                duration,
+                points,
+                BookendStyle::Repeat,
+                None,
+                false,
+            )),
+            angle: Box::new(IntervalTrack::path(
+                duration,
+                angles,
+                BookendStyle::Repeat,
+                None,
+                false,
+            )),
             style,
         }
     }
