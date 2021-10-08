@@ -69,7 +69,7 @@ impl PathAnimation {
     }
 
     pub fn sample_transform(&self, elapsed: Duration, sample_delta: Duration) -> Transform<f32> {
-        Transform::from_rotation_with_fixed_point(
+        Transform::from_rotation(
             self.get_angle(elapsed, sample_delta),
             self.sample_position(elapsed),
         )

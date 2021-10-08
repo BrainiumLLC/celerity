@@ -61,12 +61,12 @@ impl FlipAnimation {
 
         // Translate to origin, rotate & scale
         let pre_transform: Transform3d<f32> = Transform::from_translation(-position.x, -position.y)
-            .post_rotate(angle + offset)
+            .post_rotate(angle + offset, Point::zero())
             .post_scale(scale, scale * (1.0 - scale_percent))
             .into();
 
         // Unrotate, translate back to self.position
-        let post_transform: Transform3d<f32> = Transform::from_rotation(-angle)
+        let post_transform: Transform3d<f32> = Transform::from_rotation(-angle, Point::zero())
             .post_translate(position.x, position.y)
             .into();
 
