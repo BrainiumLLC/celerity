@@ -12,10 +12,12 @@ pub mod spline;
 pub mod structured;
 
 pub use self::{combinators::*, component_wise::*, lerp::*};
-use gee::en::{self, Num};
+use gee::en::Num as _;
 pub use paste;
-use std::fmt::Debug;
-use time_point::{Duration, TimePoint};
+use std::{
+    fmt::Debug,
+    time::{Duration, Instant},
+};
 
 /// A value parameterized over time.
 ///
@@ -94,7 +96,7 @@ pub trait Animation<V: Animatable>: Debug {
 
     fn path(&self, sample_count: usize, sample_duration: Duration) -> Vec<V> {
         (0..sample_count + 1)
-            .map(|i| self.sample(sample_duration * (i.to_f64() / sample_count.to_f64())))
+            .map(|i| self.sample(sample_duration.mul_f64(i.to_f64() / sample_count.to_f64())))
             .collect()
     }
 
@@ -142,7 +144,7 @@ pub trait BoundedAnimation<V: Animatable>: Animation<V> {
     fn duration(&self) -> Duration;
 
     /// The last time that this animation needs to be sampled at.
-    fn end(&self, start: TimePoint) -> TimePoint {
+    fn end(&self, start: Instant) -> Instant {
         start + self.duration()
     }
 
@@ -173,8 +175,7 @@ pub trait BoundedAnimation<V: Animatable>: Animation<V> {
     where
         Self: Sized,
     {
-        let times: i64 = en::cast(times);
-        let duration = Duration::new(self.duration().nanos * times);
+        let duration = self.duration() * times;
         Cutoff::new(Cycle::new(self), duration)
     }
 

@@ -17,4 +17,3 @@ paste = "1.0"
 rainbow = { git = "https://github.com/BrainiumLLC/rainbow" }
 replace_with = "0.1.7"
 thiserror = "1.0.24"
-time-point = "0.1.1"

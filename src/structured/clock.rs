@@ -1,13 +1,8 @@
-use crate::interval::Interval;
-use crate::spline::bezier_ease::BezierEase;
-use crate::Animation;
-use crate::BoundedAnimation;
-
-use time_point::Duration;
-
+use crate::{
+    interval::Interval, retargetable, spline::bezier_ease::BezierEase, Animation, BoundedAnimation,
+};
 use replace_with::replace_with_or_abort;
-
-use crate::retargetable;
+use std::time::Duration;
 
 const TRANSITION_TIME: f64 = 0.5;
 
@@ -23,10 +18,10 @@ pub struct Clock {
 impl Default for Clock {
     fn default() -> Self {
         Self {
-            now: Duration::zero(),
-            total_elapsed: Duration::zero(),
-            rate_of_travel: Box::new(Interval::hold(1.0, Duration::zero())),
-            interrupt_t: Duration::zero(),
+            now: Duration::ZERO,
+            total_elapsed: Duration::ZERO,
+            rate_of_travel: Box::new(Interval::hold(1.0, Duration::ZERO)),
+            interrupt_t: Duration::ZERO,
         }
     }
 }
@@ -35,14 +30,14 @@ impl Clock {
     pub fn new(now: Duration, rate_of_travel: f64) -> Self {
         Self {
             now,
-            total_elapsed: Duration::zero(),
-            rate_of_travel: Box::new(Interval::hold(rate_of_travel, Duration::zero())),
-            interrupt_t: Duration::zero(),
+            total_elapsed: Duration::ZERO,
+            rate_of_travel: Box::new(Interval::hold(rate_of_travel, Duration::ZERO)),
+            interrupt_t: Duration::ZERO,
         }
     }
 
     pub fn time_passed(&mut self, elapsed: Duration) {
-        self.now += elapsed * self.rate_of_travel.sample(self.total_elapsed);
+        self.now += elapsed.mul_f64(self.rate_of_travel.sample(self.total_elapsed));
         self.total_elapsed += elapsed;
     }
 

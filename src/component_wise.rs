@@ -1,5 +1,5 @@
-use gee::en;
-use time_point::Duration;
+use gee::en::{self, Num as _};
+use std::time::Duration;
 
 /// A value that has zero or more numeric components.
 pub trait ComponentWise: Sized {
@@ -38,19 +38,19 @@ pub trait ComponentWise: Sized {
 }
 
 impl ComponentWise for Duration {
-    type Component = i64;
+    type Component = u64;
 
     fn map<F>(self, f: F) -> Self
     where
         F: Fn(Self::Component) -> Self::Component,
     {
-        Self::new(f(self.nanos))
+        Self::from_nanos(f(self.as_nanos().to_u64()))
     }
 
     fn zip_map<F>(self, other: Self, f: F) -> Self
     where
         F: Fn(Self::Component, Self::Component) -> Self::Component,
     {
-        self.map(|nanos| f(nanos, other.nanos))
+        self.map(|nanos| f(nanos, other.as_nanos().to_u64()))
     }
 }

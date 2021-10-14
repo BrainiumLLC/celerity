@@ -6,7 +6,7 @@ use crate::{
     },
     Animatable, Animation, BoundedAnimation,
 };
-use time_point::Duration;
+use std::time::Duration;
 
 #[derive(Clone, Debug)]
 pub struct IntervalTrack<V: Animatable> {
@@ -39,9 +39,9 @@ impl<V: Animatable> IntervalTrack<V> {
     ) -> Self {
         match values.len() {
             0 => IntervalTrack::new(),
-            1 => IntervalTrack::from_interval(Interval::hold(values[0], Duration::zero())),
+            1 => IntervalTrack::from_interval(Interval::hold(values[0], Duration::ZERO)),
             2 => IntervalTrack::from_interval(Interval::transition(
-                Frame::new(Duration::zero(), values[0]),
+                Frame::new(Duration::ZERO, values[0]),
                 Frame::new(duration, values[1]),
                 track_ease,
             )),
@@ -78,7 +78,7 @@ impl<V: Animatable> IntervalTrack<V> {
     }
 
     pub fn auto_bezier(frames: Vec<Frame<V>>) -> Self {
-        let mut acc_elapsed = Duration::zero();
+        let mut acc_elapsed = Duration::ZERO;
 
         Self::from_intervals(bookend_frames(frames, BookendStyle::Repeat).windows(4).map(
             |window| {
@@ -149,11 +149,10 @@ impl<V: Animatable> Animation<V> for IntervalTrack<V> {
             .track_ease
             .as_ref()
             .map(|ease| {
-                self.duration()
-                    * ease.ease(
-                        (elapsed - self.intervals[0].start).as_secs_f64()
-                            / self.duration().as_secs_f64(),
-                    )
+                self.duration().mul_f64(ease.ease(
+                    (elapsed - self.intervals[0].start).as_secs_f64()
+                        / self.duration().as_secs_f64(),
+                ))
             })
             .unwrap_or(elapsed);
 
@@ -243,9 +242,9 @@ fn bookend<V: Animatable>(values: Vec<V>, style: BookendStyle) -> Vec<V> {
 
 fn bookend_frames<V: Animatable>(frames: Vec<Frame<V>>, style: BookendStyle) -> Vec<Frame<V>> {
     let bookended_values = bookend(frames.iter().map(|frame| frame.value).collect(), style);
-    let bookended_durations = std::iter::once(Duration::zero())
+    let bookended_durations = std::iter::once(Duration::ZERO)
         .chain(frames.into_iter().map(|frame| frame.offset))
-        .chain(std::iter::once(Duration::zero()))
+        .chain(std::iter::once(Duration::ZERO))
         .collect::<Vec<Duration>>();
     bookended_values
         .iter()
@@ -299,6 +298,6 @@ fn accumulate_lengths(maps: &Vec<SplineMap>) -> Vec<f64> {
 fn constant_velocity_durations(distances: &Vec<f64>, duration: Duration) -> Vec<Duration> {
     distances
         .iter()
-        .map(|distance| (distance / distances.last().unwrap()) * duration)
+        .map(|distance| duration.mul_f64(distance / distances.last().unwrap()))
         .collect()
 }

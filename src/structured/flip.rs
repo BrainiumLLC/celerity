@@ -5,7 +5,7 @@ use crate::{
 
 use gee::{Angle, Point, Transform, Transform3d};
 
-use time_point::Duration;
+use std::time::Duration;
 
 const MAX_DISTORT: f32 = 0.0005;
 

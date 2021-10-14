@@ -7,7 +7,7 @@ use crate::{
     },
     Animatable, Animation, BoundedAnimation,
 };
-use time_point::Duration;
+use std::time::Duration;
 
 // A half-interval
 #[derive(Copy, Clone, Debug)]
@@ -84,19 +84,19 @@ impl<V: Animatable> Interval<V> {
     }
 
     pub fn hold(value: V, duration: Duration) -> Self {
-        Self::new(Duration::zero(), duration, value, value, None, None, None)
+        Self::new(Duration::ZERO, duration, value, value, None, None, None)
     }
 
     pub fn from_values(duration: Duration, from: V, to: V, ease: Option<BezierEase>) -> Self {
-        Self::new(Duration::zero(), duration, from, to, ease, None, None)
+        Self::new(Duration::ZERO, duration, from, to, ease, None, None)
     }
 
     pub fn percent_elapsed(&self, elapsed: Duration) -> f64 {
-        if self.start == self.end {
+        if self.duration().is_zero() {
             0.0
         } else {
-            (elapsed.clamp(self.start, self.end) - self.start)
-                .div_duration_f64(self.end - self.start)
+            (elapsed.clamp(self.start, self.end) - self.start).as_secs_f64()
+                / self.duration().as_secs_f64()
         }
     }
 

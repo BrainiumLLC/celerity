@@ -7,8 +7,7 @@ use crate::{
     Animation,
 };
 use gee::{en::Num, Angle, Point, Transform};
-use std::f64::consts::TAU;
-use time_point::Duration;
+use std::{f64::consts::TAU, time::Duration};
 
 // PathAnimation: Animating along a path made simple
 // The texture will rotate to follow the path using some RotationStyle,

@@ -1,6 +1,6 @@
 use crate::{spline::bezier_ease::BezierEase, Animatable, Animation, BoundedAnimation};
 use gee::en;
-use time_point::Duration;
+use std::time::Duration;
 
 const SAMPLE_DELTA: f64 = 1e-5;
 
@@ -105,7 +105,7 @@ where
 
         let linear = Linear::new(interrupt_v, velocity);
 
-        let pre_multiplied = b.sample(Duration::zero()).distance_to(interrupt_v) == 0.0;
+        let pre_multiplied = b.sample(Duration::ZERO).distance_to(interrupt_v) == 0.0;
 
         Self {
             a: Some(a),

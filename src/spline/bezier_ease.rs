@@ -54,7 +54,7 @@ mod tests {
         spline::SplineMap, Animatable, Animation as _,
     };
     use gee::en;
-    use time_point::Duration;
+    use std::time::Duration;
 
     const TOLERANCE: f64 = 1e-4;
     const TOLERANCE_LOOSE: f64 = 1e-3;
@@ -233,8 +233,8 @@ mod tests {
         for i in 0..steps {
             let t1 = en::cast::<f64, _>(i) / en::cast::<f64, _>(steps);
             let t2 = en::cast::<f64, _>(i + 1) / en::cast::<f64, _>(steps);
-            let p1 = track.sample(start + t1 * (end - start));
-            let p2 = track.sample(start + t2 * (end - start));
+            let p1 = track.sample(start + (end - start).mul_f64(t1));
+            let p2 = track.sample(start + (end - start).mul_f64(t2));
             println!("{} {} @ {}", p1.distance_to(p2), step, t1);
             assert!(
                 approx_eq(p1.distance_to(p2), step, TOLERANCE_LOOSE),
@@ -291,11 +291,11 @@ mod tests {
             let t3 = 1.0 - en::cast::<f64, _>(i) / en::cast::<f64, _>(steps);
             let t4 = 1.0 - en::cast::<f64, _>(i + 1) / en::cast::<f64, _>(steps);
 
-            let p1 = track.sample(start + t1 * (end - start));
-            let p2 = track.sample(start + t2 * (end - start));
+            let p1 = track.sample(start + (end - start).mul_f64(t1));
+            let p2 = track.sample(start + (end - start).mul_f64(t2));
 
-            let p3 = track.sample(start + t3 * (end - start));
-            let p4 = track.sample(start + t4 * (end - start));
+            let p3 = track.sample(start + (end - start).mul_f64(t3));
+            let p4 = track.sample(start + (end - start).mul_f64(t4));
 
             println!("{} {} @ {}", p1.distance_to(p2), step, t1);
             println!("{} {} @ {}", p3.distance_to(p4), step, t4);

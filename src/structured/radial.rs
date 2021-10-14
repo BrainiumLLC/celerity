@@ -5,7 +5,7 @@ use crate::{
 
 use gee::{Angle, Circle, Point};
 
-use time_point::Duration;
+use std::time::Duration;
 
 use replace_with::replace_with_or_abort;
 
@@ -77,17 +77,12 @@ impl Radial {
         replace_with_or_abort(&mut self.distance, |distance| {
             Box::new(
                 distance.interrupt(
-                    Interval::from_values(
-                        speed / 2.0,
-                        interrupt_v,
-                        to,
-                        Some(BezierEase::ease_in()),
-                    )
-                    .chain(
-                        Interval::from_values(speed / 2.0, to, from, None)
-                            .chain(Interval::from_values(speed / 2.0, from, to, None))
-                            .cycle(),
-                    ),
+                    Interval::from_values(speed / 2, interrupt_v, to, Some(BezierEase::ease_in()))
+                        .chain(
+                            Interval::from_values(speed / 2, to, from, None)
+                                .chain(Interval::from_values(speed / 2, from, to, None))
+                                .cycle(),
+                        ),
                     interrupt_t,
                     speed,
                 ),

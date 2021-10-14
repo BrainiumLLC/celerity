@@ -3,7 +3,7 @@ use crate::{
     structured::transform::TransformAnimation, Animation,
 };
 use gee::{Point, Transform};
-use time_point::Duration;
+use std::time::Duration;
 
 // AffineAnimation: Affine Transformations made easy
 #[derive(Debug)]
@@ -15,7 +15,7 @@ pub struct AffineAnimation {
 impl AffineAnimation {
     pub fn from_values(position: Point<f32>, transform: Transform<f32>) -> Self {
         Self {
-            position: Box::new(Interval::hold(position, Duration::zero())),
+            position: Box::new(Interval::hold(position, Duration::ZERO)),
             transform: TransformAnimation::hold(transform),
         }
     }
