@@ -1,4 +1,4 @@
-use crate::{Animatable, Animation, BoundedAnimation, ComponentWise as _};
+use crate::{Animatable, Animation, BoundedAnimation};
 use std::{marker::PhantomData, time::Duration};
 
 /// See [`BoundedAnimation::rev`] for details.
@@ -18,10 +18,8 @@ where
     V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
-        self.anim.sample(
-            self.duration()
-                .zip_map(elapsed, |dur, el| std::cmp::max(dur - el, 0)),
-        )
+        self.anim
+            .sample(std::cmp::max(self.duration() - elapsed, Duration::ZERO))
     }
 }
 
