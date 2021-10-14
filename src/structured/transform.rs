@@ -3,7 +3,7 @@ use crate::spline::bezier_ease::BezierEase;
 use crate::Animation;
 use gee::{Angle, DecomposedTransform, Transform, Vector};
 
-use time_point::Duration;
+use std::time::Duration;
 
 use crate::retargetable;
 
@@ -79,10 +79,10 @@ impl TransformAnimation {
     pub fn identity() -> Self {
         let identity = DecomposedTransform::identity();
         Self {
-            translate: Box::new(Interval::hold(identity.translation, Duration::zero())),
-            rotate: Box::new(Interval::hold(identity.rotation, Duration::zero())),
-            scale: Box::new(Interval::hold(identity.scale, Duration::zero())),
-            skew: Box::new(Interval::hold(identity.skew, Duration::zero())),
+            translate: Box::new(Interval::hold(identity.translation, Duration::ZERO)),
+            rotate: Box::new(Interval::hold(identity.rotation, Duration::ZERO)),
+            scale: Box::new(Interval::hold(identity.scale, Duration::ZERO)),
+            skew: Box::new(Interval::hold(identity.skew, Duration::ZERO)),
         }
     }
 
@@ -94,10 +94,10 @@ impl TransformAnimation {
             scale,
         } = value.decompose();
         Self {
-            translate: Box::new(Interval::hold(translation, Duration::zero())),
-            rotate: Box::new(Interval::hold(rotation, Duration::zero())),
-            scale: Box::new(Interval::hold(scale, Duration::zero())),
-            skew: Box::new(Interval::hold(skew, Duration::zero())),
+            translate: Box::new(Interval::hold(translation, Duration::ZERO)),
+            rotate: Box::new(Interval::hold(rotation, Duration::ZERO)),
+            scale: Box::new(Interval::hold(scale, Duration::ZERO)),
+            skew: Box::new(Interval::hold(skew, Duration::ZERO)),
         }
     }
 

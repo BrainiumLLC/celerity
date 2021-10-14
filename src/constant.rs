@@ -1,5 +1,5 @@
 use crate::{Animatable, Animation, BoundedAnimation};
-use time_point::Duration;
+use std::time::Duration;
 
 /// An animation that never changes.
 ///
@@ -31,7 +31,7 @@ where
     fn duration(&self) -> Duration {
         // The `duration` is the period over which the animation changes, and
         // since `Constant` never changes, this is just zero.
-        Duration::zero()
+        Duration::ZERO
     }
 }
 

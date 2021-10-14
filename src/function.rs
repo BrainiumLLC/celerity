@@ -1,6 +1,8 @@
 use crate::{Animatable, Animation};
-use std::fmt::{self, Debug};
-use time_point::Duration;
+use std::{
+    fmt::{self, Debug},
+    time::Duration,
+};
 
 /// An animation that just calls a function.
 pub struct Function<F, V>

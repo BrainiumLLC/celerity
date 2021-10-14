@@ -5,8 +5,8 @@ use crate::{
     },
     Animation,
 };
+use std::time::Duration;
 use thiserror::Error;
-use time_point::Duration;
 
 #[derive(Debug, Error)]
 pub enum StarTypeError {

@@ -4,7 +4,7 @@ use crate::{
     Animation,
 };
 use bodymovin::properties::{EitherMultiDimensional, EitherValue, MultiDimensional, Value};
-use time_point::Duration;
+use std::time::Duration;
 
 impl From<bodymovin::properties::Bezier1d> for BezierEase {
     fn from(bezier: bodymovin::properties::Bezier1d) -> Self {

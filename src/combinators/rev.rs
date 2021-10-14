@@ -1,6 +1,5 @@
 use crate::{Animatable, Animation, BoundedAnimation, ComponentWise as _};
-use std::marker::PhantomData;
-use time_point::Duration;
+use std::{marker::PhantomData, time::Duration};
 
 /// See [`BoundedAnimation::rev`] for details.
 #[derive(Debug)]
