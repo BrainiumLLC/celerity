@@ -170,7 +170,7 @@ impl SplineMap {
 mod tests {
     use self::bezier::cubic_bezier;
     use super::*;
-    use gee::en;
+    use gee::en::{self, Num as _};
 
     const MATCH_TOLERANCE: f64 = 1e-3;
 
@@ -288,8 +288,8 @@ mod tests {
         let mut max = -1000.0;
 
         for i in 0..subdivision {
-            let t1 = en::cast::<f64, _>(i) / en::cast::<f64, _>(subdivision);
-            let t2 = en::cast::<f64, _>(i + 1) / en::cast::<f64, _>(subdivision);
+            let t1 = i.to_f64() / subdivision.to_f64();
+            let t2 = (i + 1).to_f64() / subdivision.to_f64();
 
             let ease1 = spline_ease(spline_map, t1);
             let ease2 = spline_ease(spline_map, t2);

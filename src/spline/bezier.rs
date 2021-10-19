@@ -104,10 +104,10 @@ pub fn invert_fixed_bezier(ox: f64, ix: f64, x: f64) -> f64 {
 // Find position for points with arbitrary # of dimensions
 pub fn cubic_bezier<V: Animatable>(b0: &V, b1: &V, b2: &V, b3: &V, t: f64) -> V {
     let it = 1.0 - t;
-    let t0 = b0.map(|v0| en::cast::<V::Component, _>(cube(it)) * v0);
-    let t1 = b1.map(|v1| en::cast::<V::Component, _>(3.0 * square(it) * t) * v1);
-    let t2 = b2.map(|v2| en::cast::<V::Component, _>(3.0 * it * square(t)) * v2);
-    let t3 = b3.map(|v3| en::cast::<V::Component, _>(cube(t)) * v3);
+    let t0 = b0.map(|v0| V::cast_component(cube(it)) * v0);
+    let t1 = b1.map(|v1| V::cast_component(3.0 * square(it) * t) * v1);
+    let t2 = b2.map(|v2| V::cast_component(3.0 * it * square(t)) * v2);
+    let t3 = b3.map(|v3| V::cast_component(cube(t)) * v3);
 
     let result = t0
         .zip_map(t1, |v, v1| v + v1)
@@ -120,10 +120,10 @@ pub fn cubic_bezier<V: Animatable>(b0: &V, b1: &V, b2: &V, b3: &V, t: f64) -> V 
 // Find (exact) tangent/velocity for points with arbitrary # of dimensions
 pub fn dt_cubic_bezier<V: Animatable>(b0: &V, b1: &V, b2: &V, b3: &V, t: f64) -> V {
     let it = 1.0 - t;
-    let t0 = b0.map(|v0| en::cast::<V::Component, _>(-3.0 * square(it)) * v0);
-    let t1 = b1.map(|v1| en::cast::<V::Component, _>(3.0 * it * (it - 2.0 * t)) * v1);
-    let t2 = b2.map(|v2| en::cast::<V::Component, _>(3.0 * t * (2.0 * it - t)) * v2);
-    let t3 = b3.map(|v3| en::cast::<V::Component, _>(3.0 * square(t)) * v3);
+    let t0 = b0.map(|v0| V::cast_component(-3.0 * square(it)) * v0);
+    let t1 = b1.map(|v1| V::cast_component(3.0 * it * (it - 2.0 * t)) * v1);
+    let t2 = b2.map(|v2| V::cast_component(3.0 * t * (2.0 * it - t)) * v2);
+    let t3 = b3.map(|v3| V::cast_component(3.0 * square(t)) * v3);
 
     let result = t0
         .zip_map(t1, |v, v1| v + v1)

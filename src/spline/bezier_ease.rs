@@ -53,7 +53,7 @@ mod tests {
         interval::Interval, interval_track::IntervalTrack, spline::bezier_path::BezierPath,
         spline::SplineMap, Animatable, Animation as _,
     };
-    use gee::en;
+    use gee::en::{self, Num as _};
     use std::time::Duration;
 
     const TOLERANCE: f64 = 1e-4;
@@ -229,10 +229,10 @@ mod tests {
 
         // Animation should be linear by arc length
         let steps: usize = 100;
-        let step = length / (steps as f64);
+        let step = length / steps.to_f64();
         for i in 0..steps {
-            let t1 = en::cast::<f64, _>(i) / en::cast::<f64, _>(steps);
-            let t2 = en::cast::<f64, _>(i + 1) / en::cast::<f64, _>(steps);
+            let t1 = i.to_f64() / steps.to_f64();
+            let t2 = (i + 1).to_f64() / steps.to_f64();
             let p1 = track.sample(start + (end - start).mul_f64(t1));
             let p2 = track.sample(start + (end - start).mul_f64(t2));
             println!("{} {} @ {}", p1.distance_to(p2), step, t1);
@@ -285,11 +285,11 @@ mod tests {
         let steps: usize = 100;
         let step = length / (steps as f64);
         for i in 0..steps {
-            let t1 = en::cast::<f64, _>(i) / en::cast::<f64, _>(steps);
-            let t2 = en::cast::<f64, _>(i + 1) / en::cast::<f64, _>(steps);
+            let t1 = i.to_f64() / steps.to_f64();
+            let t2 = (i + 1).to_f64() / steps.to_f64();
 
-            let t3 = 1.0 - en::cast::<f64, _>(i) / en::cast::<f64, _>(steps);
-            let t4 = 1.0 - en::cast::<f64, _>(i + 1) / en::cast::<f64, _>(steps);
+            let t3 = 1.0 - i.to_f64() / steps.to_f64();
+            let t4 = 1.0 - (i + 1).to_f64() / steps.to_f64();
 
             let p1 = track.sample(start + (end - start).mul_f64(t1));
             let p2 = track.sample(start + (end - start).mul_f64(t2));

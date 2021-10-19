@@ -46,7 +46,7 @@ where
 
             // blend a_contribution and b_contribution
             let blended_contributions = a_contribution.zip_map(b_contribution, |a, b| {
-                let ac = a * en::cast::<V::Component, _>(1.0 - ease);
+                let ac = a * V::cast_component(1.0 - ease);
                 let bc = if self.pre_multiplied {
                     b
                 } else {
@@ -101,7 +101,7 @@ where
                 a.sample(interrupt_t - Duration::from_secs_f64(SAMPLE_DELTA)),
                 |n, p| n - p,
             )
-            .map(|a| a * en::cast::<V::Component, _>(0.5 / SAMPLE_DELTA));
+            .map(|a| a * V::cast_component(0.5 / SAMPLE_DELTA));
 
         let linear = Linear::new(interrupt_v, velocity);
 
@@ -140,7 +140,7 @@ where
 {
     fn sample(&self, elapsed: Duration) -> V {
         self.value.zip_map(self.dt_value, |v, dvdt| {
-            v + dvdt * en::cast::<V::Component, _>(elapsed.as_secs_f64())
+            v + dvdt * V::cast_component(elapsed.as_secs_f64())
         })
     }
 }

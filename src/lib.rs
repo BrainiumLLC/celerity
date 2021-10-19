@@ -106,9 +106,7 @@ pub trait Animation<V: Animatable>: Debug {
         self.path(sample_count + 1, sample_duration)
             .windows(2)
             .map(|window| {
-                window[1].zip_map(window[0], |a, b| {
-                    (a - b) / V::cast_component::<f64>(sample_delta)
-                })
+                window[1].zip_map(window[0], |a, b| (a - b) / V::cast_component(sample_delta))
             })
             .collect()
     }
@@ -119,8 +117,7 @@ pub trait Animation<V: Animatable>: Debug {
         let a = self.sample(elapsed - Duration::from_secs_f64(delta));
         let b = self.sample(elapsed + Duration::from_secs_f64(delta));
 
-        b.sub(a)
-            .map(|r| r * V::cast_component::<f64>(inverse_delta))
+        b.sub(a).map(|r| r * V::cast_component(inverse_delta))
     }
 
     // Highly sensitive to sampling errors in velocity

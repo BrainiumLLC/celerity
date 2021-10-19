@@ -1,4 +1,4 @@
-use gee::en::{self};
+use gee::en::{self, Num as _};
 
 use crate::Animatable;
 
@@ -56,21 +56,21 @@ pub fn catmull_rom_value<V: Animatable>(
 
     let a1 = if d10 != 0.0 {
         p0.zip_map(*p1, |v0, v1| {
-            en::cast(en::cast::<f64, _>(v0) * (d1t / d10) + en::cast::<f64, _>(v1) * (dt0 / d10))
+            (v0.to_f64() * (d1t / d10) + v1.to_f64() * (dt0 / d10)).cast()
         })
     } else {
         *p0
     };
     let a2 = if d21 != 0.0 {
         p1.zip_map(*p2, |v1, v2| {
-            en::cast(en::cast::<f64, _>(v1) * (d2t / d21) + en::cast::<f64, _>(v2) * (-d1t / d21))
+            (v1.to_f64() * (d2t / d21) + v2.to_f64() * (-d1t / d21)).cast()
         })
     } else {
         *p1
     };
     let a3 = if d32 != 0.0 {
         p2.zip_map(*p3, |v2, v3| {
-            en::cast(en::cast::<f64, _>(v2) * (d3t / d32) + en::cast::<f64, _>(v3) * (-d2t / d32))
+            (v2.to_f64() * (d3t / d32) + v3.to_f64() * (-d2t / d32)).cast()
         })
     } else {
         *p2
@@ -78,14 +78,14 @@ pub fn catmull_rom_value<V: Animatable>(
 
     let b1 = if d20 != 0.0 {
         a1.zip_map(a2, |v1, v2| {
-            en::cast(en::cast::<f64, _>(v1) * (d2t / d20) + en::cast::<f64, _>(v2) * (dt0 / d20))
+            (v1.to_f64() * (d2t / d20) + v2.to_f64() * (dt0 / d20)).cast()
         })
     } else {
         a1
     };
     let b2 = if d31 != 0.0 {
         a2.zip_map(a3, |v2, v3| {
-            en::cast(en::cast::<f64, _>(v2) * (d3t / d31) + en::cast::<f64, _>(v3) * (-d1t / d31))
+            (v2.to_f64() * (d3t / d31) + v3.to_f64() * (-d1t / d31)).cast()
         })
     } else {
         a2
@@ -93,7 +93,7 @@ pub fn catmull_rom_value<V: Animatable>(
 
     if d21 != 0.0 {
         b1.zip_map(b2, |v1, v2| {
-            en::cast(en::cast::<f64, _>(v1) * (d2t / d21) + en::cast::<f64, _>(v2) * (-d1t / d21))
+            (v1.to_f64() * (d2t / d21) + v2.to_f64() * (-d1t / d21)).cast()
         })
     } else {
         b1
@@ -127,10 +127,10 @@ pub fn catmull_rom_to_bezier<V: Animatable>(
     // Bezier has factor of 3, central difference has factor of 2
     let d1 = b1
         .zip_map(a1, |b, a| b - a)
-        .map(|d| d * en::cast::<V::Component, _>(1.0 / (TANGENT_EPSILON * 6.0)));
+        .map(|d| d * V::cast_component(1.0 / (TANGENT_EPSILON * 6.0)));
     let d2 = a2
         .zip_map(b2, |b, a| b - a)
-        .map(|d| d * en::cast::<V::Component, _>(1.0 / (TANGENT_EPSILON * 6.0)));
+        .map(|d| d * V::cast_component(1.0 / (TANGENT_EPSILON * 6.0)));
 
     (
         *p1,
