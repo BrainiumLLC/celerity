@@ -14,10 +14,7 @@ pub mod structured;
 pub use self::{combinators::*, component_wise::*, lerp::*};
 use gee::en::Num as _;
 pub use paste;
-use std::{
-    fmt::Debug,
-    time::{Duration, Instant},
-};
+use std::{fmt::Debug, ops::Add, time::Duration};
 
 /// A value parameterized over time.
 ///
@@ -141,7 +138,10 @@ pub trait BoundedAnimation<V: Animatable>: Animation<V> {
     fn duration(&self) -> Duration;
 
     /// The last time that this animation needs to be sampled at.
-    fn end(&self, start: Instant) -> Instant {
+    fn end<I>(&self, start: I) -> I
+    where
+        I: Add<Duration, Output = I>,
+    {
         start + self.duration()
     }
 
