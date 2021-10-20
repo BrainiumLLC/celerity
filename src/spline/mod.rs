@@ -170,7 +170,7 @@ impl SplineMap {
 mod tests {
     use self::bezier::cubic_bezier;
     use super::*;
-    use gee::en::{self, Num as _};
+    use gee::en::Num as _;
 
     const MATCH_TOLERANCE: f64 = 1e-3;
 

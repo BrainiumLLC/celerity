@@ -1,5 +1,4 @@
 use crate::{spline::bezier_ease::BezierEase, Animatable, Animation, BoundedAnimation};
-use gee::en;
 use std::time::Duration;
 
 const SAMPLE_DELTA: f64 = 1e-5;

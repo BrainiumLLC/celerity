@@ -1,5 +1,3 @@
-use gee::en;
-
 use crate::Animatable;
 
 // Newton-Raphson iterations

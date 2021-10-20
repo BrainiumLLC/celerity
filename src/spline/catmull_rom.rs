@@ -1,4 +1,4 @@
-use gee::en::{self, Num as _};
+use gee::en::Num as _;
 
 use crate::Animatable;
 

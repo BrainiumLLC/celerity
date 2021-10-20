@@ -53,7 +53,7 @@ mod tests {
         interval::Interval, interval_track::IntervalTrack, spline::bezier_path::BezierPath,
         spline::SplineMap, Animatable, Animation as _,
     };
-    use gee::en::{self, Num as _};
+    use gee::en::Num as _;
     use std::time::Duration;
 
     const TOLERANCE: f64 = 1e-4;
