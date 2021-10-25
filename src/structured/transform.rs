@@ -1,11 +1,6 @@
-use crate::interval::Interval;
-use crate::spline::bezier_ease::BezierEase;
-use crate::Animation;
+use crate::{interval::Interval, retargetable, spline::bezier_ease::BezierEase, Animation};
 use gee::{Angle, DecomposedTransform, Transform, Vector};
-
 use std::time::Duration;
-
-use crate::retargetable;
 
 // TransformAnimation: Working with Affine transformations
 #[derive(Debug)]

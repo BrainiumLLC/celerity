@@ -2,9 +2,7 @@ use crate::{
     constant::Constant, interval::Interval, retargetable, spline::bezier_ease::BezierEase,
     Animation,
 };
-
 use gee::{Angle, Point, Transform, Transform3d};
-
 use std::time::Duration;
 
 const MAX_DISTORT: f32 = 0.0005;

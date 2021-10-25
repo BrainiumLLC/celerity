@@ -1,6 +1,5 @@
-use gee::en::Num as _;
-
 use crate::Animatable;
+use gee::en::Num as _;
 
 // const UNIFORM_ALPHA: f64 = 0.0;
 const CENTRIPETAL_ALPHA: f64 = 0.5;

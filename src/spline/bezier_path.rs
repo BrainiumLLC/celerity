@@ -1,4 +1,5 @@
-use crate::{spline::bezier::cubic_bezier, Animatable};
+use super::bezier::cubic_bezier;
+use crate::Animatable;
 
 // Describes the two middle control points for a bezier path
 // between an interval's spatial endpoints.

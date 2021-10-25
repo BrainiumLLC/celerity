@@ -1,15 +1,10 @@
 use crate::{
-    constant::Constant, interval::Interval, spline::bezier_ease::BezierEase, Animation,
-    BoundedAnimation,
+    constant::Constant, interval::Interval, retargetable, spline::bezier_ease::BezierEase,
+    Animation, BoundedAnimation,
 };
-
 use gee::{Angle, Circle, Point};
-
-use std::time::Duration;
-
 use replace_with::replace_with_or_abort;
-
-use crate::retargetable;
+use std::time::Duration;
 
 // Radial: A fun test for Celerity
 // An animation which travels around a circle, varying its angle and distance from an origin point

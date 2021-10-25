@@ -1,4 +1,4 @@
-use crate::spline::bezier::cubic_bezier_ease;
+use super::bezier::cubic_bezier_ease;
 use gee::Point;
 
 // Describes the temporal Bezier ease between two Animatables
