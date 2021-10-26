@@ -42,7 +42,7 @@ impl BezierEase {
     }
 
     pub fn ease(&self, t: f64) -> f64 {
-        cubic_bezier_ease(self.ox, self.oy, self.ix, self.iy, t)
+        cubic_bezier_ease(self.ox, self.oy, self.ix, self.iy, t.clamp(0.0, 1.0))
     }
 }
 
