@@ -50,8 +50,8 @@ impl BezierEase {
 mod tests {
     use super::*;
     use crate::{
-        interval::Interval, interval_track::IntervalTrack, spline::bezier_path::BezierPath,
-        spline::SplineMap, Animatable, Animation as _,
+        interval::Interval, interval_track::IntervalTrack, lerp_components, lerp_scalar,
+        spline::bezier_path::BezierPath, spline::SplineMap, Animatable, Animation as _,
     };
     use gee::en::Num as _;
     use std::time::Duration;
@@ -98,9 +98,21 @@ mod tests {
         // Animation should be linear
         assert!(approx_eq(track.sample(start), from, TOLERANCE));
         assert!(approx_eq(track.sample(end), to, TOLERANCE));
-        assert!(approx_eq(track.sample(mid), from.lerp(to, 0.5), TOLERANCE));
-        assert!(approx_eq(track.sample(q1), from.lerp(to, 0.25), TOLERANCE));
-        assert!(approx_eq(track.sample(q2), from.lerp(to, 0.75), TOLERANCE));
+        assert!(approx_eq(
+            track.sample(mid),
+            lerp_scalar(from, to, 0.5),
+            TOLERANCE,
+        ));
+        assert!(approx_eq(
+            track.sample(q1),
+            lerp_scalar(from, to, 0.25),
+            TOLERANCE,
+        ));
+        assert!(approx_eq(
+            track.sample(q2),
+            lerp_scalar(from, to, 0.75),
+            TOLERANCE,
+        ));
     }
 
     #[test]
@@ -134,16 +146,20 @@ mod tests {
         // Animation should ease towards start and end
         assert!(approx_eq(track.sample(start), from, TOLERANCE));
         assert!(approx_eq(track.sample(end), to, TOLERANCE));
-        assert!(approx_eq(track.sample(mid), from.lerp(to, 0.5), TOLERANCE));
+        assert!(approx_eq(
+            track.sample(mid),
+            lerp_scalar(from, to, 0.5),
+            TOLERANCE,
+        ));
         assert!(approx_eq(
             track.sample(q1),
-            from.lerp(to, 0.1059),
-            TOLERANCE
+            lerp_scalar(from, to, 0.1059),
+            TOLERANCE,
         ));
         assert!(approx_eq(
             track.sample(q2),
-            from.lerp(to, 0.8941),
-            TOLERANCE
+            lerp_scalar(from, to, 0.8941),
+            TOLERANCE,
         ));
     }
 
@@ -180,18 +196,18 @@ mod tests {
         assert!(approx_eq_point(track.sample(end), to, TOLERANCE));
         assert!(approx_eq_point(
             track.sample(mid),
-            from.lerp(to, 0.5),
-            TOLERANCE
+            lerp_components(from, to, 0.5),
+            TOLERANCE,
         ));
         assert!(approx_eq_point(
             track.sample(q1),
-            from.lerp(to, 0.1059),
-            TOLERANCE
+            lerp_components(from, to, 0.1059),
+            TOLERANCE,
         ));
         assert!(approx_eq_point(
             track.sample(q2),
-            from.lerp(to, 0.8941),
-            TOLERANCE
+            lerp_components(from, to, 0.8941),
+            TOLERANCE,
         ));
     }
 

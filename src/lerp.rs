@@ -3,9 +3,14 @@ use gee::en::{self, Num as _};
 use std::fmt::Debug;
 
 /// Linearly interpolates between two numbers.
-pub fn lerp<C: en::Num>(a: C, b: C, factor: f64) -> C {
+pub fn lerp_scalar<C: en::Num>(a: C, b: C, factor: f64) -> C {
     // This uses 2 multiplications to be numerically stable! Woo!
     (a.to_f64() * (1.0 - factor) + b.to_f64() * factor).cast()
+}
+
+/// Linearly interpolates each component pair in two `ComponentWise`s.
+pub fn lerp_components<C: ComponentWise>(a: C, b: C, factor: f64) -> C {
+    a.zip_map(b, |a, b| lerp_scalar(a, b, factor))
 }
 
 pub fn linear_value<V: Animatable>(p0: &V, p1: &V, t0: f64, t1: f64, t: f64) -> V {
@@ -24,11 +29,6 @@ pub fn linear_value<V: Animatable>(p0: &V, p1: &V, t0: f64, t1: f64, t: f64) -> 
 
 /// A value that can be animated.
 pub trait Animatable: Copy + Debug + ComponentWise {
-    /// Linearly interpolates between two `Animatable`s.
-    fn lerp(self, other: Self, factor: f64) -> Self {
-        self.zip_map(other, |a, b| lerp(a, b, factor))
-    }
-
     /// The shortest distance between two `Animatable`s (never negative!)
     fn distance_to(self, other: Self) -> f64;
 }

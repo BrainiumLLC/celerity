@@ -1,4 +1,5 @@
 use crate::{
+    lerp_components,
     spline::{
         bezier::{cubic_bezier, cubic_bezier_ease, fixed_bezier},
         bezier_ease::BezierEase,
@@ -164,7 +165,7 @@ impl<V: Animatable> Animation<V> for Interval<V> {
             .path
             .as_ref()
             .map(|p| cubic_bezier(&self.from, &p.b1, &p.b2, &self.to, spline_time))
-            .unwrap_or_else(|| self.from.lerp(self.to, spline_time));
+            .unwrap_or_else(|| lerp_components(self.from, self.to, spline_time));
         value
     }
 }

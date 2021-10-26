@@ -2,7 +2,7 @@
 name = "celerity"
 version = "0.1.0"
 authors = ["Brainium Studios LLC"]
-edition = "2018"
+edition = "2021"
 description = "Buttery smooth animation toolkit"
 documentation = "https://docs.rs/celerity"
 repository = "https://github.com/BrainiumLLC/celerity"
