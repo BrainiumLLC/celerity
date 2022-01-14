@@ -11,6 +11,7 @@ license = "Apache-2.0/MIT"
 
 [dependencies]
 bodymovin = { git = "https://github.com/BrainiumLLC/bodymovin-rs" }
+d6 = { git = "https://github.com/BrainiumLLC/d6", optional = true }
 gee = { git = "https://github.com/BrainiumLLC/gee" }
 log = "0.4.11"
 paste = "1.0"

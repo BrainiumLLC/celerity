@@ -145,6 +145,11 @@ pub trait BoundedAnimation<V: Animatable>: Animation<V> {
         start + self.duration()
     }
 
+    #[cfg(feature = "d6")]
+    fn sample_random(&self) -> V {
+        self.sample(d6::range(Duration::ZERO..=self.duration()))
+    }
+
     /// Appends another animation after this animation.
     ///
     /// If the other animation is also a `BoundedAnimation`, then the resulting
