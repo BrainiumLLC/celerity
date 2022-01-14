@@ -140,6 +140,11 @@ pub trait BoundedAnimation<V: Animatable>: Animation<V> {
     /// same value as when sampling at this duration.
     fn duration(&self) -> Duration;
 
+    /// If the animation will still change *after* the given duration.
+    fn changes_after(&self, elapsed: Duration) -> bool {
+        elapsed < self.duration()
+    }
+
     /// The last time that this animation needs to be sampled at.
     fn end(&self, start: Instant) -> Instant {
         start + self.duration()
