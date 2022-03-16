@@ -181,6 +181,8 @@ pub enum BookendStyle {
     Loop,
     /// Use the first/last three points to calculate a point that would loop back toward the second-to-first/last point
     Spiral,
+    /// Don't add additional bookends, as the user has already included external control points
+    None,
 }
 
 fn bookend<V: Animatable>(values: Vec<V>, style: BookendStyle) -> Vec<V> {
@@ -236,6 +238,7 @@ fn bookend<V: Animatable>(values: Vec<V>, style: BookendStyle) -> Vec<V> {
                     .chain(std::iter::once(final_bookend))
                     .collect()
             }
+            BookendStyle::None => values,
         }
     }
 }
