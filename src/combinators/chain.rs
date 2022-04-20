@@ -54,4 +54,21 @@ where
             _marker: PhantomData,
         }
     }
+
+    pub fn percent_elapsed_a(&self, elapsed: Duration) -> f64 {
+        self.a.percent_elapsed(elapsed)
+    }
+}
+
+impl<A, B, V> Chain<A, B, V>
+where
+    A: BoundedAnimation<V>,
+    B: BoundedAnimation<V>,
+    V: Animatable,
+{
+    pub fn percent_elapsed_b(&self, elapsed: Duration) -> f64 {
+        (elapsed < self.a.duration())
+            .then(|| 0.0)
+            .unwrap_or_else(|| self.b.percent_elapsed(elapsed - self.a.duration()))
+    }
 }

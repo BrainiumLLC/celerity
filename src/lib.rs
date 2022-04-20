@@ -153,6 +153,11 @@ pub trait BoundedAnimation<V: Animatable>: Animation<V> {
         start + self.duration()
     }
 
+    /// The elapsed percentage. This may change if an animation is extended
+    fn percent_elapsed(&self, elapsed: Duration) -> f64 {
+        (elapsed.as_secs_f64() / self.duration().as_secs_f64()).clamp(0.0, 1.0)
+    }
+
     #[cfg(feature = "d6")]
     fn sample_random(&self) -> V {
         self.sample(d6::range(Duration::ZERO..=self.duration()))
