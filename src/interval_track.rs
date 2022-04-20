@@ -1,17 +1,18 @@
+use gee::en::Num;
+
 use crate::{
+    ease::Ease,
     interval::{Frame, Interval},
-    spline::{
-        bezier_ease::BezierEase, bezier_path::BezierPath,
-        catmull_rom::centripetal_catmull_rom_to_bezier, SplineMap,
-    },
+    spline::{bezier_path::BezierPath, catmull_rom::centripetal_catmull_rom_to_bezier, SplineMap},
     Animatable, Animation, BoundedAnimation,
 };
+
 use std::time::Duration;
 
 #[derive(Clone, Debug)]
 pub struct IntervalTrack<V: Animatable> {
     intervals: Vec<Interval<V>>,
-    track_ease: Option<BezierEase>,
+    track_ease: Option<Ease>,
 }
 
 impl<V: Animatable> IntervalTrack<V> {
@@ -34,13 +35,13 @@ impl<V: Animatable> IntervalTrack<V> {
         duration: Duration,
         values: Vec<V>,
         bookend_style: BookendStyle,
-        track_ease: Option<BezierEase>,
+        track_ease: Option<Ease>,
         rectify: bool,
     ) -> Self {
         match values.len() {
             0 => IntervalTrack::new(),
             1 => IntervalTrack::from_interval(Interval::hold(values[0], Duration::ZERO)),
-            2 => IntervalTrack::from_interval(Interval::transition(
+            2 => IntervalTrack::from_interval(Interval::eased(
                 Frame::new(Duration::ZERO, values[0]),
                 Frame::new(duration, values[1]),
                 track_ease,
@@ -102,7 +103,7 @@ impl<V: Animatable> IntervalTrack<V> {
         ))
     }
 
-    pub fn with_track_ease(mut self, track_ease: Option<BezierEase>) -> Self {
+    pub fn with_track_ease(mut self, track_ease: Option<Ease>) -> Self {
         self.track_ease = track_ease;
         self
     }
@@ -274,20 +275,6 @@ fn bookended_values_to_bezier_structs<V: Animatable>(
 }
 
 fn accumulate_lengths(maps: &Vec<SplineMap>) -> Vec<f64> {
-    // Does not include initial state
-    // maps.iter().scan(0.0, |length, map| {
-    //     *length = *length + map.length;
-    //     Some(*length)
-    // }).collect()
-
-    // Does not include final state
-    // maps.iter().scan(0.0, |length, map| {
-    //     let result = Some(*length);
-    //     *length = *length + map.length;
-    //     result
-    // }).collect()
-
-    // Ugly, uses mut
     let mut accumulated_lengths = vec![];
     let total_length = maps.iter().fold(0.0, |len, map| {
         accumulated_lengths.push(len);

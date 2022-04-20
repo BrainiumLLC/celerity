@@ -1,6 +1,6 @@
 use crate::{
-    constant::Constant, interval::Interval, retargetable, spline::bezier_ease::BezierEase,
-    Animation, BoundedAnimation,
+    constant::Constant, ease::Ease, interval::Interval, retargetable,
+    spline::bezier_ease::BezierEase, Animation, BoundedAnimation,
 };
 use gee::{Angle, Circle, Point};
 use replace_with::replace_with_or_abort;

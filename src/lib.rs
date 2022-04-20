@@ -4,6 +4,7 @@ pub mod after_effects;
 mod combinators;
 mod component_wise;
 pub mod constant;
+pub mod ease;
 pub mod function;
 pub mod interval;
 pub mod interval_track;
@@ -11,7 +12,9 @@ mod lerp;
 pub mod spline;
 pub mod structured;
 
-pub use self::{combinators::*, component_wise::*, lerp::*};
+pub use self::{
+    combinators::*, component_wise::*, ease::*, interval::*, interval_track::*, lerp::*,
+};
 use gee::en::Num as _;
 pub use paste;
 use std::{

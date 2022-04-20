@@ -1,5 +1,6 @@
 use crate::{
-    interval::Interval, retargetable, spline::bezier_ease::BezierEase, Animation, BoundedAnimation,
+    ease::Ease, interval::Interval, retargetable, spline::bezier_ease::BezierEase, Animation,
+    BoundedAnimation,
 };
 use replace_with::replace_with_or_abort;
 use std::time::Duration;

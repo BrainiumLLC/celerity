@@ -1,4 +1,4 @@
-use crate::{interval::Interval, retargetable, spline::bezier_ease::BezierEase, Animation};
+use crate::{ease::Ease, interval::Interval, retargetable, Animation};
 use gee::{Angle, DecomposedTransform, Transform, Vector};
 use std::time::Duration;
 
@@ -17,7 +17,7 @@ impl TransformAnimation {
         duration: Duration,
         from: Transform<f32>,
         to: Transform<f32>,
-        ease: Option<BezierEase>,
+        ease: Option<Ease>,
     ) -> Self {
         let DecomposedTransform {
             translation: ta,
@@ -106,7 +106,7 @@ impl TransformAnimation {
         interrupt_t: Duration,
         transition_t: Duration,
         target: Transform<f32>,
-        ease: Option<BezierEase>,
+        ease: Option<Ease>,
     ) {
         let DecomposedTransform {
             translation,

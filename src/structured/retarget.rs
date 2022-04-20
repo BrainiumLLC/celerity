@@ -12,7 +12,7 @@ macro_rules! retargetable {
             interrupt_t: Duration,
             transition_t: Duration,
             target: $v,
-            ease: Option<BezierEase>,
+            ease: Option<Ease>,
         ) {
             let interrupt_v = self.$anim.sample(interrupt_t);
 

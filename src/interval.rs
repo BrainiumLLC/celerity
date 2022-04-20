@@ -1,7 +1,8 @@
 use crate::{
+    ease::Ease,
     lerp_components,
     spline::{
-        bezier::{cubic_bezier, cubic_bezier_ease, fixed_bezier},
+        bezier::{cubic_bezier, fixed_bezier},
         bezier_ease::BezierEase,
         bezier_path::BezierPath,
         spline_ease, SplineMap,
@@ -29,7 +30,7 @@ pub struct Interval<V: Animatable> {
     pub end: Duration,
     pub from: V,
     pub to: V,
-    pub ease: Option<BezierEase>,
+    pub ease: Option<Ease>,
     pub path: Option<BezierPath<V>>,
     pub reticulated_spline: Option<SplineMap>,
 }
@@ -49,7 +50,7 @@ impl<V: Animatable> Interval<V> {
         end: Duration,
         from: V,
         to: V,
-        ease: Option<BezierEase>,
+        ease: Option<Ease>,
         path: Option<BezierPath<V>>,
         reticulated_spline: Option<SplineMap>,
     ) -> Self {
@@ -64,19 +65,7 @@ impl<V: Animatable> Interval<V> {
         }
     }
 
-    pub fn eased(a: Frame<V>, b: Frame<V>, ox: f64, oy: f64, ix: f64, iy: f64) -> Self {
-        Self::new(
-            a.offset,
-            b.offset,
-            a.value,
-            b.value,
-            Some(BezierEase::new(ox, oy, ix, iy)),
-            None,
-            None,
-        )
-    }
-
-    pub fn transition(a: Frame<V>, b: Frame<V>, ease: Option<BezierEase>) -> Self {
+    pub fn eased(a: Frame<V>, b: Frame<V>, ease: Option<Ease>) -> Self {
         Self::new(a.offset, b.offset, a.value, b.value, ease, None, None)
     }
 
@@ -88,7 +77,7 @@ impl<V: Animatable> Interval<V> {
         Self::new(Duration::ZERO, duration, value, value, None, None, None)
     }
 
-    pub fn from_values(duration: Duration, from: V, to: V, ease: Option<BezierEase>) -> Self {
+    pub fn from_values(duration: Duration, from: V, to: V, ease: Option<Ease>) -> Self {
         Self::new(Duration::ZERO, duration, from, to, ease, None, None)
     }
 
@@ -132,8 +121,8 @@ impl<V: Animatable> Interval<V> {
             end: self.end,
             path: self.path(detail, self.end - self.start),
             ease: match &self.ease {
-                Some(ease) => sample_ease(ease),
-                None => vec![(0.0, 0.0), (1.0, 1.0)],
+                Some(Ease::Bezier(bezier)) => sample_ease(bezier),
+                _ => vec![(0.0, 0.0), (1.0, 1.0)],
             },
             reticulated_spline: self
                 .reticulated_spline
@@ -150,7 +139,7 @@ impl<V: Animatable> Animation<V> for Interval<V> {
         let eased_time = self
             .ease
             .as_ref()
-            .map(|e| cubic_bezier_ease(e.ox, e.oy, e.ix, e.iy, percent_elapsed))
+            .map(|e| e.ease(percent_elapsed))
             .unwrap_or(percent_elapsed);
 
         // Map eased distance to spline time using spline map (or not)

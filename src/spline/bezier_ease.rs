@@ -1,4 +1,5 @@
 use super::bezier::cubic_bezier_ease;
+use crate::ease::Ease;
 use gee::Point;
 
 // Describes the temporal Bezier ease between two Animatables
@@ -6,7 +7,7 @@ use gee::Point;
 //
 // X values always range [0...1]
 // Y values usually range [0...1]
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct BezierEase {
     pub ox: f64,
     pub oy: f64,
@@ -19,6 +20,10 @@ impl BezierEase {
         Self { ox, oy, ix, iy }
     }
 
+    pub const fn new_ease(ox: f64, oy: f64, ix: f64, iy: f64) -> Ease {
+        Ease::Bezier(Self::new(ox, oy, ix, iy))
+    }
+
     pub fn as_points(&self) -> (Point<f64>, Point<f64>, Point<f64>, Point<f64>) {
         let b0 = Point::new(0.0, 0.0);
         let b1 = Point::new(self.ox, self.oy);
@@ -28,17 +33,17 @@ impl BezierEase {
         (b0, b1, b2, b3)
     }
 
-    pub const fn linear() -> Self {
-        Self::new(0.16, 0.16, 0.84, 0.84)
+    pub const fn linear() -> Ease {
+        Self::new_ease(0.16, 0.16, 0.84, 0.84)
     }
-    pub const fn ease_in() -> Self {
-        Self::new(0.16, 0.0, 0.84, 0.84)
+    pub const fn ease_in() -> Ease {
+        Self::new_ease(0.16, 0.0, 0.84, 0.84)
     }
-    pub const fn ease_out() -> Self {
-        Self::new(0.16, 0.16, 0.84, 1.0)
+    pub const fn ease_out() -> Ease {
+        Self::new_ease(0.16, 0.16, 0.84, 1.0)
     }
-    pub const fn ease_in_out() -> Self {
-        Self::new(0.16, 0.0, 0.84, 1.0)
+    pub const fn ease_in_out() -> Ease {
+        Self::new_ease(0.16, 0.0, 0.84, 1.0)
     }
 
     pub fn ease(&self, t: f64) -> f64 {
@@ -131,12 +136,7 @@ mod tests {
             end,
             from,
             to,
-            ease: Some(BezierEase {
-                ox: 0.5,
-                oy: 0.0,
-                ix: 0.5,
-                iy: 1.0,
-            }),
+            ease: Some(BezierEase::new_ease(0.5, 0.0, 0.5, 1.0)),
             path: None,
             reticulated_spline: None,
         };
@@ -179,12 +179,7 @@ mod tests {
             end,
             from,
             to,
-            ease: Some(BezierEase {
-                ox: 0.5,
-                oy: 0.0,
-                ix: 0.5,
-                iy: 1.0,
-            }),
+            ease: Some(BezierEase::new_ease(0.5, 0.0, 0.5, 1.0)),
             path: None,
             reticulated_spline: None,
         };
@@ -222,7 +217,6 @@ mod tests {
         let b1: gee::Point<f64> = gee::Point::new(-4.0, -4.0);
         let b2: gee::Point<f64> = gee::Point::new(4.0, 4.0);
 
-        //let spline_map = SplineMap::from_spline(|t| cubic_bezier(&from, &b1, &b2, &to, t));
         let spline_map = SplineMap::from_bezier(&from, &b1, &b2, &to, true);
 
         let length = spline_map.length;
@@ -271,7 +265,6 @@ mod tests {
         let b1: gee::Point<f64> = gee::Point::new(-4.0, -4.0);
         let b2: gee::Point<f64> = gee::Point::new(4.0, 4.0);
 
-        //let spline_map = SplineMap::from_spline(|t| cubic_bezier(&from, &b1, &b2, &to, t));
         let spline_map = SplineMap::from_bezier(&from, &b1, &b2, &to, true);
 
         let length = spline_map.length;
@@ -282,12 +275,7 @@ mod tests {
             end,
             from,
             to,
-            ease: Some(BezierEase {
-                ox: 0.5,
-                oy: 0.0,
-                ix: 0.5,
-                iy: 1.0,
-            }),
+            ease: Some(BezierEase::new_ease(0.5, 0.0, 0.5, 1.0)),
             path: Some(BezierPath { b1, b2 }),
             reticulated_spline: Some(spline_map),
         };

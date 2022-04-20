@@ -1,10 +1,9 @@
 use crate::{
     constant::Constant,
+    ease::Ease,
     interval::Interval,
     interval_track::{BookendStyle, IntervalTrack},
-    retargetable,
-    spline::bezier_ease::BezierEase,
-    Animation,
+    retargetable, Animation,
 };
 use gee::{en::Num, Angle, Point, Transform};
 use std::{f64::consts::TAU, time::Duration};

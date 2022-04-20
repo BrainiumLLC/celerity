@@ -1,7 +1,4 @@
-use crate::{
-    constant::Constant, interval::Interval, retargetable, spline::bezier_ease::BezierEase,
-    Animation,
-};
+use crate::{constant::Constant, ease::Ease, interval::Interval, retargetable, Animation};
 use gee::{Angle, Point, Transform, Transform3d};
 use std::time::Duration;
 

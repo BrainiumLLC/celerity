@@ -1,6 +1,6 @@
 use crate::{
-    interval::Interval, retargetable, spline::bezier_ease::BezierEase,
-    structured::transform::TransformAnimation, Animation,
+    ease::Ease, interval::Interval, retargetable, structured::transform::TransformAnimation,
+    Animation,
 };
 use gee::{Point, Transform};
 use std::time::Duration;
@@ -33,7 +33,7 @@ impl AffineAnimation {
         interrupt_t: Duration,
         transition_t: Duration,
         target: Transform<f32>,
-        ease: Option<BezierEase>,
+        ease: Option<Ease>,
     ) {
         self.transform
             .retarget(interrupt_t, transition_t, target, ease);
