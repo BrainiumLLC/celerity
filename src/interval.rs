@@ -9,6 +9,7 @@ use crate::{
     },
     Animatable, Animation, BoundedAnimation,
 };
+use core::fmt::Debug;
 use std::time::Duration;
 
 // A half-interval
@@ -24,7 +25,7 @@ impl<V: Animatable> Frame<V> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Interval<V: Animatable> {
     pub start: Duration,
     pub end: Duration,
@@ -162,5 +163,30 @@ impl<V: Animatable> Animation<V> for Interval<V> {
 impl<V: Animatable> BoundedAnimation<V> for Interval<V> {
     fn duration(&self) -> Duration {
         self.end - self.start
+    }
+}
+
+impl<V: Animatable> Debug for Interval<V> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Interval<{}>", std::any::type_name::<V>())
+            .expect("Failed to write Interval type!");
+
+        write!(f, "\n\tstart:\t\t{:?}", &self.start).expect("Failed to write Interval start time!");
+        write!(f, "\n\tend:\t\t{:?}", &self.end).expect("Failed to write Interval end time!");
+        write!(f, "\n\tduration:\t{:?}", self.duration())
+            .expect("Failed to write Interval Duration!");
+        write!(f, "\n\tfrom:\t\t{:?}", &self.from).expect("Failed to write Interval start value!");
+        write!(f, "\n\tto:\t\t{:?}", &self.to).expect("Failed to write Interval end value!");
+        match &self.ease {
+            Some(Ease::Bezier(_ease)) => {
+                write!(f, "\n\tease:\t\t{:?}", &self.ease).expect("Failed to write Interval ease!")
+            }
+            Some(Ease::Function(_)) => {
+                write!(f, "\n\tease:\t\tEasing Function").expect("Failed to write Interval ease!")
+            }
+            _ => write!(f, "\n\tease:\t\tNo Ease").expect("Failed to write Interval ease!"),
+        }
+        write!(f, "\n\tpath:\t\t{:?}", &self.path).expect("Failed to write Interval path!");
+        write!(f, "\n\treticulated_spline: {:?}", &self.reticulated_spline)
     }
 }

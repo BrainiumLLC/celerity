@@ -6,10 +6,10 @@ use crate::{
     spline::{bezier_path::BezierPath, catmull_rom::centripetal_catmull_rom_to_bezier, SplineMap},
     Animatable, Animation, BoundedAnimation,
 };
-
+use core::fmt::Debug;
 use std::time::Duration;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct IntervalTrack<V: Animatable> {
     intervals: Vec<Interval<V>>,
     track_ease: Option<Ease>,
@@ -290,4 +290,16 @@ fn constant_velocity_durations(distances: &Vec<f64>, duration: Duration) -> Vec<
         .iter()
         .map(|distance| duration.mul_f64(distance / distances.last().unwrap()))
         .collect()
+}
+
+impl<V: Animatable> Debug for IntervalTrack<V> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "IntervalTrack<{}>", std::any::type_name::<V>())
+            .expect("Failed to write IntervalTrack type!");
+
+        for interval in &self.intervals {
+            write!(f, "\n  {:?}", interval).expect("Failed to print Interval information!");
+        }
+        write!(f, "\n\ttrack_ease:\t{:?}", self.track_ease)
+    }
 }
