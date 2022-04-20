@@ -30,12 +30,17 @@ impl Rect {
     pub(crate) fn from_bodymovin(
         rect: bodymovin::shapes::Rect,
         frame_rate: f64,
+        position_scale: &Vec<f64>,
+        size_scale: &Vec<f64>,
     ) -> Result<Self, RectError> {
         Ok(Self {
             direction: rect.direction,
-            position: MaybeTrack::from_multi_dimensional(rect.position, frame_rate)?,
-            size: MaybeTrack::from_multi_dimensional(rect.size, frame_rate)?,
-            rounded_corners: MaybeTrack::from_value(rect.rounded_corners, frame_rate)
+            position: MaybeTrack::from_multi_dimensional(
+                rect.position.scaled(&position_scale),
+                frame_rate,
+            )?,
+            size: MaybeTrack::from_multi_dimensional(rect.size.scaled(&size_scale), frame_rate)?,
+            rounded_corners: MaybeTrack::from_property(rect.rounded_corners, frame_rate)
                 .map_err(RectError::RoundedCornersInvalid)?,
         })
     }

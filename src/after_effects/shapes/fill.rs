@@ -27,7 +27,7 @@ impl Fill {
         frame_rate: f64,
     ) -> Result<Self, FillError> {
         Ok(Self {
-            opacity: MaybeTrack::from_value(fill.opacity, frame_rate)?,
+            opacity: MaybeTrack::from_property(fill.opacity, frame_rate)?,
             color: Color::from_bodymovin_solid(fill.color, frame_rate)?,
         })
     }
@@ -37,13 +37,13 @@ impl Fill {
         frame_rate: f64,
     ) -> Result<Self, FillError> {
         Ok(Self {
-            opacity: MaybeTrack::from_value(fill.opacity, frame_rate)?,
+            opacity: MaybeTrack::from_property(fill.opacity, frame_rate)?,
             color: Color::from_bodymovin_gradient(
                 fill.start_point,
                 fill.end_point,
                 fill.ty,
-                fill.highlight_length,
-                fill.highlight_angle,
+                Some(fill.highlight_length.unwrap_or_default().value),
+                Some(fill.highlight_angle.unwrap_or_default().value),
                 frame_rate,
             )?,
         })

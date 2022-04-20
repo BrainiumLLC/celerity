@@ -5,6 +5,7 @@ use crate::{
     },
     Animation,
 };
+use bodymovin::properties::ScalarKeyframe;
 use std::time::Duration;
 use thiserror::Error;
 
@@ -47,8 +48,8 @@ pub enum StarType {
 impl StarType {
     fn from_bodymovin(
         ty: bodymovin::shapes::StarType,
-        inner_radius: Option<bodymovin::properties::EitherValue>,
-        inner_roundness: Option<bodymovin::properties::EitherValue>,
+        inner_radius: Option<bodymovin::properties::Value<f64, ScalarKeyframe>>,
+        inner_roundness: Option<bodymovin::properties::Value<f64, ScalarKeyframe>>,
         frame_rate: f64,
     ) -> Result<Self, StarTypeError> {
         match ty {
@@ -88,20 +89,33 @@ impl Star {
     pub(crate) fn from_bodymovin(
         star: bodymovin::shapes::Star,
         frame_rate: f64,
+        position_scale: &Vec<f64>,
+        radius_scale: f64,
     ) -> Result<Self, StarError> {
         Ok(Self {
             direction: star.direction,
-            position: MaybeTrack::from_multi_dimensional(star.position, frame_rate)?,
-            outer_radius: MaybeTrack::from_value(star.outer_radius, frame_rate)
-                .map_err(StarError::OuterRadiusInvalid)?,
-            outer_roundness: MaybeTrack::from_value(star.outer_roundness, frame_rate)
+            position: MaybeTrack::from_multi_dimensional(
+                star.position.scaled(position_scale),
+                frame_rate,
+            )?,
+            outer_radius: MaybeTrack::from_property(
+                star.outer_radius.scaled(radius_scale),
+                frame_rate,
+            )
+            .map_err(StarError::OuterRadiusInvalid)?,
+            outer_roundness: MaybeTrack::from_property(star.outer_roundness, frame_rate)
                 .map_err(StarError::OuterRoundnessInvalid)?,
-            rotation: MaybeTrack::from_value(star.rotation, frame_rate)?,
-            points: MaybeTrack::from_value(star.points, frame_rate)?,
+            rotation: MaybeTrack::from_property(star.rotation, frame_rate)?,
+            points: MaybeTrack::from_property(star.points, frame_rate)?,
             ty: StarType::from_bodymovin(
                 star.ty,
-                star.inner_radius,
-                star.inner_roundness,
+                Some(
+                    star.inner_radius
+                        .unwrap_or_default()
+                        .scaled(radius_scale)
+                        .value,
+                ),
+                Some(star.inner_roundness.unwrap_or_default().value),
                 frame_rate,
             )?,
         })

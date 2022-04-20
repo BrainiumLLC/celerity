@@ -16,17 +16,27 @@ pub struct Shape {
 }
 
 impl Shape {
-    pub(crate) fn from_bodymovin(
+    pub fn from_bodymovin(
         layer: bodymovin::layers::Shape,
         frame_rate: f64,
+        position_scale: &Vec<f64>,
+        size_scale: &Vec<f64>,
     ) -> Result<Self, ShapeError> {
         Ok(Self {
-            transform: shapes::Transform::from_bodymovin_helper(layer.transform, frame_rate)?,
+            transform: shapes::Transform::from_bodymovin_helper(
+                layer.transform,
+                frame_rate,
+                position_scale,
+            )?,
             shapes: layer
+                .mixin
                 .shapes
                 .into_iter()
                 // TODO: what to do with the options here?
-                .flat_map(|shape| shapes::Shape::from_bodymovin(shape, frame_rate).transpose())
+                .flat_map(|shape| {
+                    shapes::Shape::from_bodymovin(shape, frame_rate, position_scale, size_scale)
+                        .transpose()
+                })
                 .collect::<Result<_, _>>()?,
         })
     }

@@ -36,14 +36,15 @@ impl Stroke {
     pub(crate) fn from_bodymovin(
         stroke: bodymovin::shapes::Stroke,
         frame_rate: f64,
+        width_scale: f64,
     ) -> Result<Self, StrokeError> {
         Ok(Self {
             line_cap: stroke.line_cap,
             line_join: stroke.line_join,
             miter_limit: stroke.miter_limit,
-            opacity: MaybeTrack::from_value(stroke.opacity, frame_rate)
+            opacity: MaybeTrack::from_property(stroke.opacity, frame_rate)
                 .map_err(StrokeError::OpacityInvalid)?,
-            width: MaybeTrack::from_value(stroke.width, frame_rate)
+            width: MaybeTrack::from_property(stroke.width.scaled(width_scale), frame_rate)
                 .map_err(StrokeError::WidthInvalid)?,
             color: Color::from_bodymovin_solid(stroke.color, frame_rate)?,
         })
@@ -57,17 +58,22 @@ impl Stroke {
             line_cap: stroke.line_cap,
             line_join: stroke.line_join,
             miter_limit: stroke.miter_limit,
-            opacity: MaybeTrack::from_value(stroke.opacity, frame_rate)
+            opacity: MaybeTrack::from_property(stroke.opacity, frame_rate)
                 .map_err(StrokeError::OpacityInvalid)?,
             // TODO: fix upstream naming inconsistency
-            width: MaybeTrack::from_value(stroke.stroke_width, frame_rate)
+            width: MaybeTrack::from_property(stroke.stroke_width, frame_rate)
                 .map_err(StrokeError::WidthInvalid)?,
             color: Color::from_bodymovin_gradient(
                 stroke.start_point,
                 stroke.end_point,
                 stroke.ty,
-                stroke.highlight_length,
-                stroke.highlight_angle,
+                Some(
+                    stroke
+                        .highlight_length
+                        .expect("Attempted to produce gradient of unknown length.")
+                        .value,
+                ),
+                Some(stroke.highlight_angle.unwrap_or_default().value),
                 frame_rate,
             )?,
         })

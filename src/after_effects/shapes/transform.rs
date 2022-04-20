@@ -5,6 +5,9 @@ use crate::{
     },
     Animation,
 };
+use bodymovin::properties::Value;
+use core::fmt::Debug;
+use gee::{Angle, Size, Vector};
 use std::time::Duration;
 use thiserror::Error;
 
@@ -26,7 +29,6 @@ pub enum TransformError {
     SkewAxisInvalid(#[source] <f64 as FromValue>::Error),
 }
 
-#[derive(Debug)]
 pub struct Transform {
     anchor_point: MaybeTrack<gee::Vector<f64>>,
     position: MaybeTrack<gee::Vector<f64>>,
@@ -38,25 +40,44 @@ pub struct Transform {
 }
 
 impl Transform {
+    pub fn identity() -> Self {
+        Self {
+            anchor_point: MaybeTrack::Fixed(Vector::default()),
+            position: MaybeTrack::Fixed(Vector::default()),
+            scale: MaybeTrack::Fixed(Vector::one()),
+            rotation: MaybeTrack::Fixed(Angle::default()),
+            opacity: MaybeTrack::Fixed(1.0),
+            skew: MaybeTrack::Fixed(Angle::default()),
+            skew_axis: MaybeTrack::Fixed(0.0),
+        }
+    }
+
     pub(crate) fn from_bodymovin_helper(
         transform: bodymovin::helpers::Transform,
         frame_rate: f64,
+        position_scale: &Vec<f64>,
     ) -> Result<Self, TransformError> {
         // TODO: we're not handling px/py/pz
         Ok(Self {
-            anchor_point: MaybeTrack::from_multi_dimensional(transform.anchor_point, frame_rate)
-                .map_err(TransformError::AnchorPointInvalid)?,
-            position: MaybeTrack::from_multi_dimensional(transform.position, frame_rate)
-                .map_err(TransformError::PositionInvalid)?,
+            anchor_point: MaybeTrack::from_multi_dimensional(
+                transform.anchor_point.scaled(&position_scale),
+                frame_rate,
+            )
+            .map_err(TransformError::AnchorPointInvalid)?,
+            position: MaybeTrack::from_multi_dimensional(
+                transform.position.scaled(&position_scale),
+                frame_rate,
+            )
+            .map_err(TransformError::PositionInvalid)?,
             scale: MaybeTrack::from_multi_dimensional(transform.scale, frame_rate)
                 .map_err(TransformError::ScaleInvalid)?,
-            rotation: MaybeTrack::from_value(transform.rotation, frame_rate)
+            rotation: MaybeTrack::from_property(transform.rotation, frame_rate)
                 .map_err(TransformError::RotationInvalid)?,
-            opacity: MaybeTrack::from_value(transform.opacity, frame_rate)
+            opacity: MaybeTrack::from_property(transform.opacity, frame_rate)
                 .map_err(TransformError::OpacityInvalid)?,
-            skew: MaybeTrack::from_value(transform.skew, frame_rate)
+            skew: MaybeTrack::from_property(transform.skew, frame_rate)
                 .map_err(TransformError::SkewInvalid)?,
-            skew_axis: MaybeTrack::from_value(transform.skew_axis, frame_rate)
+            skew_axis: MaybeTrack::from_property(transform.skew_axis, frame_rate)
                 .map_err(TransformError::SkewAxisInvalid)?,
         })
     }
@@ -64,21 +85,28 @@ impl Transform {
     pub(crate) fn from_bodymovin_shape(
         transform: bodymovin::shapes::Transform,
         frame_rate: f64,
+        position_scale: &Vec<f64>,
     ) -> Result<Self, TransformError> {
         Ok(Self {
-            anchor_point: MaybeTrack::from_multi_dimensional(transform.anchor_point, frame_rate)
-                .map_err(TransformError::AnchorPointInvalid)?,
-            position: MaybeTrack::from_multi_dimensional(transform.position, frame_rate)
-                .map_err(TransformError::PositionInvalid)?,
-            scale: MaybeTrack::from_multi_dimensional(transform.scale, frame_rate)
+            anchor_point: MaybeTrack::from_multi_dimensional(
+                transform.anchor_point.scaled(&position_scale),
+                frame_rate,
+            )
+            .map_err(TransformError::AnchorPointInvalid)?,
+            position: MaybeTrack::from_multi_dimensional(
+                transform.position.scaled(&position_scale),
+                frame_rate,
+            )
+            .map_err(TransformError::PositionInvalid)?,
+            scale: MaybeTrack::from_multi_dimensional(transform.scale, frame_rate) // Does scale need to be size_scaled? It's all relative, right? So if the underlying shape's size has been modified, we're good to go?
                 .map_err(TransformError::ScaleInvalid)?,
-            rotation: MaybeTrack::from_value(transform.rotation, frame_rate)
+            rotation: MaybeTrack::from_property(transform.rotation, frame_rate)
                 .map_err(TransformError::RotationInvalid)?,
-            opacity: MaybeTrack::from_value(transform.opacity, frame_rate)
+            opacity: MaybeTrack::from_property(transform.opacity, frame_rate)
                 .map_err(TransformError::OpacityInvalid)?,
-            skew: MaybeTrack::from_value(transform.skew, frame_rate)
+            skew: MaybeTrack::from_property(transform.skew, frame_rate)
                 .map_err(TransformError::SkewInvalid)?,
-            skew_axis: MaybeTrack::from_value(transform.skew_axis, frame_rate)
+            skew_axis: MaybeTrack::from_property(transform.skew_axis, frame_rate)
                 .map_err(TransformError::SkewAxisInvalid)?,
         })
     }
@@ -105,5 +133,52 @@ impl Transform {
         let opacity = self.opacity.sample(elapsed) / 100.0;
         log::info!("sampled opacity {:?}", opacity);
         opacity
+    }
+}
+
+impl Debug for Transform {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.position {
+            MaybeTrack::Animated(track) => {
+                write!(f, "Position:\n{:?}\n", track)
+                    .expect("Error when printing Transform Position information!");
+            }
+            MaybeTrack::Fixed(value) => write!(f, "Position:\n{:?}\n", value)
+                .expect("Error when printing Transform Position information!"),
+        };
+
+        match &self.scale {
+            MaybeTrack::Animated(track) => {
+                write!(f, "Scale:\n{:?}\n", track)
+                    .expect("Error when printing Transform Scale information!");
+            }
+            _ => (),
+        };
+
+        match &self.rotation {
+            MaybeTrack::Animated(track) => {
+                write!(f, "Rotation\n{:?}\n", track)
+                    .expect("Error when printing Transform Rotation information!");
+            }
+            _ => (),
+        };
+
+        match &self.skew {
+            MaybeTrack::Animated(track) => {
+                write!(f, "Skew:\n{:?}\n", track)
+                    .expect("Error when printing Transform Skew information!");
+            }
+            _ => (),
+        };
+
+        match &self.opacity {
+            MaybeTrack::Animated(track) => {
+                write!(f, "Opacity:\n{:?}\n", track)
+                    .expect("Error when printing Transform Opacity information!");
+            }
+            _ => (),
+        };
+
+        write!(f, "")
     }
 }

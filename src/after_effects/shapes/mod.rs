@@ -73,7 +73,12 @@ fn politely_set<T: Debug>(dest: &mut Option<T>, val: T) {
 }
 
 impl Shape {
-    fn from_group(group: bodymovin::shapes::Group, frame_rate: f64) -> Result<Option<Self>, Error> {
+    fn from_group(
+        group: bodymovin::shapes::Group,
+        frame_rate: f64,
+        position_scale: &Vec<f64>,
+        size_scale: &Vec<f64>,
+    ) -> Result<Option<Self>, Error> {
         let mut geometry = None;
         let mut style = Style::default();
         for item in group.items {
@@ -81,19 +86,35 @@ impl Shape {
                 // Geometry
                 bodymovin::shapes::AnyShape::Shape(shape) => {
                     geometry = Some(Geometry::FreePoly(FreePoly::from_bodymovin(
-                        shape, frame_rate,
+                        shape,
+                        frame_rate,
+                        position_scale,
+                        size_scale,
                     )?));
                 }
                 bodymovin::shapes::AnyShape::Rect(rect) => {
-                    geometry = Some(Geometry::Rect(Rect::from_bodymovin(rect, frame_rate)?));
+                    geometry = Some(Geometry::Rect(Rect::from_bodymovin(
+                        rect,
+                        frame_rate,
+                        position_scale,
+                        size_scale,
+                    )?));
                 }
                 bodymovin::shapes::AnyShape::Ellipse(ellipse) => {
                     geometry = Some(Geometry::Ellipse(Ellipse::from_bodymovin(
-                        ellipse, frame_rate,
+                        ellipse,
+                        frame_rate,
+                        position_scale,
+                        size_scale,
                     )?));
                 }
                 bodymovin::shapes::AnyShape::Star(star) => {
-                    geometry = Some(Geometry::Star(Star::from_bodymovin(star, frame_rate)?));
+                    geometry = Some(Geometry::Star(Star::from_bodymovin(
+                        star,
+                        frame_rate,
+                        position_scale,
+                        size_scale[0], // TODO: How to select which axis to use for radius scaling?
+                    )?));
                 }
 
                 // Style
@@ -109,7 +130,7 @@ impl Shape {
                 bodymovin::shapes::AnyShape::Stroke(stroke) => {
                     politely_set(
                         &mut style.stroke,
-                        Stroke::from_bodymovin(stroke, frame_rate)?,
+                        Stroke::from_bodymovin(stroke, frame_rate, size_scale[0])?, // TODO: Which axis to use for stroke scaling?
                     );
                 }
                 bodymovin::shapes::AnyShape::GradientStroke(gradient_stroke) => {
@@ -118,22 +139,22 @@ impl Shape {
                         Stroke::from_bodymovin_with_gradient(gradient_stroke, frame_rate)?,
                     );
                 }
-                bodymovin::shapes::AnyShape::Merge(merge) => {
+                bodymovin::shapes::AnyShape::Merge(_merge) => {
                     log::warn!("merges aren't implemented yet; ignoring");
                     // politely_set(&mut style.merge, merge);
                 }
-                bodymovin::shapes::AnyShape::Trim(trim) => {
+                bodymovin::shapes::AnyShape::Trim(_trim) => {
                     log::warn!("trims aren't implemented yet; ignoring");
                     // politely_set(&mut style.trim, trim);
                 }
-                bodymovin::shapes::AnyShape::RoundedCorners(rounded_corners) => {
+                bodymovin::shapes::AnyShape::RoundedCorners(_rounded_corners) => {
                     log::warn!("rounded corners aren't implemented yet; ignoring");
                     // politely_set(&mut style.rounded_corners, rounded_corners);
                 }
                 bodymovin::shapes::AnyShape::Transform(transform) => {
                     politely_set(
                         &mut style.transform,
-                        Transform::from_bodymovin_shape(transform, frame_rate)?,
+                        Transform::from_bodymovin_shape(transform, frame_rate, position_scale)?,
                     );
                 }
 
@@ -141,6 +162,8 @@ impl Shape {
                     // TODO: do we need to support this?
                     Err(Error::NestedGroup)?
                 }
+
+                bodymovin::shapes::AnyShape::Repeater(_) => Err(Error::NotAGroup)?,
             }
         }
         Ok(geometry.map(|geometry| Self { geometry, style }))
@@ -149,9 +172,13 @@ impl Shape {
     pub(crate) fn from_bodymovin(
         shape: bodymovin::shapes::AnyShape,
         frame_rate: f64,
+        position_scale: &Vec<f64>,
+        size_scale: &Vec<f64>,
     ) -> Result<Option<Self>, Error> {
         match shape {
-            bodymovin::shapes::AnyShape::Group(group) => Self::from_group(group, frame_rate),
+            bodymovin::shapes::AnyShape::Group(group) => {
+                Self::from_group(group, frame_rate, position_scale, size_scale)
+            }
             // TODO: will this ever happen?
             _ => Err(Error::NotAGroup),
         }

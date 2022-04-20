@@ -20,11 +20,16 @@ impl Ellipse {
     pub(crate) fn from_bodymovin(
         ellipse: bodymovin::shapes::Ellipse,
         frame_rate: f64,
+        position_scale: &Vec<f64>,
+        size_scale: &Vec<f64>,
     ) -> Result<Self, EllipseError> {
         Ok(Self {
             direction: ellipse.direction,
-            position: MaybeTrack::from_multi_dimensional(ellipse.position, frame_rate)?,
-            size: MaybeTrack::from_multi_dimensional(ellipse.size, frame_rate)?,
+            position: MaybeTrack::from_multi_dimensional(
+                ellipse.position.scaled(position_scale),
+                frame_rate,
+            )?,
+            size: MaybeTrack::from_multi_dimensional(ellipse.size.scaled(size_scale), frame_rate)?,
         })
     }
 }

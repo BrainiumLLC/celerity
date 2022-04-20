@@ -5,6 +5,7 @@ use crate::{
     },
     Animation as _,
 };
+use bodymovin::properties::ScalarKeyframe;
 use std::time::Duration;
 use thiserror::Error;
 
@@ -49,8 +50,8 @@ pub enum GradientType {
 impl GradientType {
     fn from_bodymovin(
         ty: bodymovin::shapes::GradientType,
-        highlight_length: Option<bodymovin::properties::EitherValue>,
-        highlight_angle: Option<bodymovin::properties::EitherValue>,
+        highlight_length: Option<bodymovin::properties::Value<f64, ScalarKeyframe>>,
+        highlight_angle: Option<bodymovin::properties::Value<f64, ScalarKeyframe>>,
         frame_rate: f64,
     ) -> Result<Self, GradientTypeError> {
         match ty {
@@ -90,7 +91,7 @@ pub enum Color {
 
 impl Color {
     pub(crate) fn from_bodymovin_solid(
-        color: bodymovin::properties::EitherMultiDimensional,
+        color: bodymovin::properties::MultiDimensional,
         frame_rate: f64,
     ) -> Result<Self, SolidError> {
         MaybeTrack::from_multi_dimensional(color, frame_rate)
@@ -99,11 +100,11 @@ impl Color {
     }
 
     pub(crate) fn from_bodymovin_gradient(
-        start_point: bodymovin::properties::EitherMultiDimensional,
-        end_point: bodymovin::properties::EitherMultiDimensional,
+        start_point: bodymovin::properties::MultiDimensional,
+        end_point: bodymovin::properties::MultiDimensional,
         ty: bodymovin::shapes::GradientType,
-        highlight_length: Option<bodymovin::properties::EitherValue>,
-        highlight_angle: Option<bodymovin::properties::EitherValue>,
+        highlight_length: Option<bodymovin::properties::Value<f64, ScalarKeyframe>>,
+        highlight_angle: Option<bodymovin::properties::Value<f64, ScalarKeyframe>>,
         // color: ???,
         frame_rate: f64,
     ) -> Result<Self, GradientError> {
