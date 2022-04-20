@@ -239,7 +239,12 @@ fn bookend<V: Animatable>(values: Vec<V>, style: BookendStyle) -> Vec<V> {
                     .chain(std::iter::once(final_bookend))
                     .collect()
             }
-            BookendStyle::None => values,
+            BookendStyle::None => {
+                assert!(
+                    values.len() >= 4,
+                    "Catmull-Rom Spline calculation requires four values, but you only specified {}. Perhaps you meant to use a Repeat or Linear BookendStyle?", values.len());
+                values
+            }
         }
     }
 }
