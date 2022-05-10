@@ -4,6 +4,7 @@ pub mod bezier_path;
 pub mod catmull_rom;
 
 use self::{bezier::dt_cubic_bezier, catmull_rom::catmull_rom_value};
+pub use self::{bezier_ease::*, bezier_path::*};
 use crate::{lerp::linear_value, Animatable};
 use gee::en::num_traits::Zero as _;
 

@@ -13,8 +13,10 @@ pub mod spline;
 pub mod structured;
 
 pub use self::{
-    combinators::*, component_wise::*, ease::*, interval::*, interval_track::*, lerp::*,
+    combinators::*, component_wise::*, constant::*, ease::*, interval::*, interval_track::*,
+    lerp::*, spline::*, structured::*,
 };
+
 use gee::en::Num as _;
 pub use paste;
 use std::{
