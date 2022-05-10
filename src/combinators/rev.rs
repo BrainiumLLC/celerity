@@ -18,8 +18,11 @@ where
     V: Animatable,
 {
     fn sample(&self, elapsed: Duration) -> V {
-        self.anim
-            .sample(std::cmp::max(self.duration() - elapsed, Duration::ZERO))
+        self.anim.sample(
+            (elapsed < self.duration())
+                .then(|| self.duration() - elapsed)
+                .unwrap_or_else(|| Duration::ZERO),
+        )
     }
 }
 
