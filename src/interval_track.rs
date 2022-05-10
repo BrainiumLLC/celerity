@@ -167,7 +167,7 @@ impl<V: Animatable> BoundedAnimation<V> for IntervalTrack<V> {
     fn duration(&self) -> Duration {
         self.intervals
             .last()
-            .map(|last| last.end - self.intervals[0].start)
+            .map(|last| last.end)
             .unwrap_or_default()
     }
 }
