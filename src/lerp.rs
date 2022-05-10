@@ -245,3 +245,42 @@ impl Animatable for rainbow::LinRgba {
         (r * r + g * g + b * b + a * a).to_f64().sqrt()
     }
 }
+
+impl ComponentWise for rainbow::SrgbRgba {
+    type Component = f64;
+
+    fn map<F>(self, f: F) -> Self
+    where
+        F: Fn(Self::Component) -> Self::Component,
+    {
+        Self::from_f32_array(rainbow::util::map_all(self.into_f32_array(), |c| {
+            f(c.cast()).to_f32()
+        }))
+    }
+
+    fn zip_map<F>(self, other: Self, f: F) -> Self
+    where
+        F: Fn(Self::Component, Self::Component) -> Self::Component,
+    {
+        let [ar, ag, ab, aa] = self.into_f32_array();
+        let [br, bg, bb, ba] = other.into_f32_array();
+        Self::from_f32(
+            f(ar.cast(), br.cast()).to_f32(),
+            f(ag.cast(), bg.cast()).to_f32(),
+            f(ab.cast(), bb.cast()).to_f32(),
+            f(aa.cast(), ba.cast()).to_f32(),
+        )
+    }
+}
+
+impl Animatable for rainbow::SrgbRgba {
+    fn distance_to(self, other: Self) -> f64 {
+        let [ar, ag, ab, aa] = self.into_f32_array();
+        let [br, bg, bb, ba] = other.into_f32_array();
+        let r = ar - br;
+        let g = ag - bg;
+        let b = ab - bb;
+        let a = aa - ba;
+        (r * r + g * g + b * b + a * a).to_f64().sqrt()
+    }
+}
