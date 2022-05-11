@@ -93,11 +93,16 @@ where
 
     pub fn reversible(a: A, b: B, interrupt_t: Duration, transition_t: Duration) -> Self {
         let interrupt_v = a.sample(interrupt_t);
+        let sample_duration = Duration::from_secs_f64(SAMPLE_DELTA)
 
         let velocity = a
-            .sample(interrupt_t + Duration::from_secs_f64(SAMPLE_DELTA))
+            .sample(interrupt_t + sample_duration)
             .zip_map(
-                a.sample(interrupt_t - Duration::from_secs_f64(SAMPLE_DELTA)),
+                a.sample(
+                    (interrupt_t < sample_duration)
+                        .then(|| Duration::ZERO)
+                        .unwrap_or_else(|| interrupt_t - Duration::from_secs_f64(SAMPLE_DELTA)),
+                ),
                 |n, p| n - p,
             )
             .map(|a| a * V::cast_component(0.5 / SAMPLE_DELTA));
