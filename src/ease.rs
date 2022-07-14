@@ -1,11 +1,21 @@
 use crate::spline::bezier_ease::BezierEase;
+use std::fmt::Debug;
 
 pub type EaseFunction = fn(f64) -> f64;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub enum Ease {
     Bezier(BezierEase),
     Function(EaseFunction),
+}
+
+impl Debug for Ease {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Ease::Bezier(ease) => write!(f, "Ease::Bezier({:?})", ease),
+            Ease::Function(_) => write!(f, "Ease::Function(...)"),
+        }
+    }
 }
 
 impl Ease {

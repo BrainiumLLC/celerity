@@ -93,4 +93,45 @@ impl Scene {
 
         (position_scale, size_scale)
     }
+
+    pub fn print(&self) {
+        println!("Scene size: {:?}", self.size);
+
+        // TODO: PreComp & Image assets
+        // for asset in &scene.assets {
+        //     println!("Asset found! {:?}", asset);
+        // }
+
+        for layer in &self.layers {
+            match layer {
+                Layer::Shape(shape) => {
+                    println!("\tShape Layer: {:?}", shape.transform);
+                    println!("\t\tContaining Shapes:\n{:?}", shape.shapes);
+                }
+                Layer::PreComp(precomp) => {
+                    println!("\tPreComp Layer Found: {}", precomp.id);
+                    println!("\t\tWith Transform:\n{:?}", precomp.transform);
+                }
+                Layer::Image(image) => {
+                    println!("\tImage Layer: {:?}", image.texture_id);
+                    println!("\t\tWith Transform: {:?}", image.transform);
+                }
+                Layer::Text(text) => {
+                    println!(
+                        "\tText Layer: \"{:?}\": height: {}\n\t\t{:?}",
+                        text.text, text.line_height, text.transform
+                    );
+                }
+                Layer::Null(null) => {
+                    println!("Null Layer!");
+                }
+                Layer::Solid(solid) => {
+                    println!("Solid Layer!");
+                }
+                _ => {
+                    println!("\tUnrecognized Layer Type.");
+                }
+            }
+        }
+    }
 }

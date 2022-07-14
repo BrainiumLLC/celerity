@@ -42,6 +42,7 @@ pub enum Geometry {
     Rect(Rect),
     Ellipse(Ellipse),
     Star(Star),
+    Null,
 }
 
 #[derive(Debug, Default)]
@@ -169,6 +170,127 @@ impl Shape {
         Ok(geometry.map(|geometry| Self { geometry, style }))
     }
 
+    pub fn from_anyshape(
+        shape: bodymovin::shapes::AnyShape,
+        frame_rate: f64,
+        position_scale: &Vec<f64>,
+        size_scale: &Vec<f64>,
+    ) -> Result<Self, Error> {
+        match shape {
+            // Geometry
+            bodymovin::shapes::AnyShape::Shape(shape) => Ok(Self {
+                geometry: Geometry::FreePoly(FreePoly::from_bodymovin(
+                    shape,
+                    frame_rate,
+                    position_scale,
+                    size_scale,
+                )?),
+                style: Style::default(),
+            }),
+            bodymovin::shapes::AnyShape::Rect(rect) => Ok(Self {
+                geometry: Geometry::Rect(Rect::from_bodymovin(
+                    rect,
+                    frame_rate,
+                    position_scale,
+                    size_scale,
+                )?),
+                style: Style::default(),
+            }),
+            bodymovin::shapes::AnyShape::Ellipse(ellipse) => Ok(Self {
+                geometry: Geometry::Ellipse(Ellipse::from_bodymovin(
+                    ellipse,
+                    frame_rate,
+                    position_scale,
+                    size_scale,
+                )?),
+                style: Style::default(),
+            }),
+            bodymovin::shapes::AnyShape::Star(star) => Ok(Self {
+                geometry: Geometry::Star(Star::from_bodymovin(
+                    star,
+                    frame_rate,
+                    position_scale,
+                    size_scale[0], // TODO: How to select which axis to use for radius scaling?
+                )?),
+                style: Style::default(),
+            }),
+
+            // Style
+            bodymovin::shapes::AnyShape::Fill(fill) => Ok(Self {
+                geometry: Geometry::Null,
+                style: Style {
+                    fill: Some(Fill::from_bodymovin(fill, frame_rate)?),
+                    ..Style::default()
+                },
+            }),
+            bodymovin::shapes::AnyShape::GradientFill(gradient_fill) => Ok(Self {
+                geometry: Geometry::Null,
+                style: Style {
+                    fill: Some(Fill::from_bodymovin_with_gradient(
+                        gradient_fill,
+                        frame_rate,
+                    )?),
+                    ..Style::default()
+                },
+            }),
+            bodymovin::shapes::AnyShape::Stroke(stroke) => Ok(Self {
+                geometry: Geometry::Null,
+                style: Style {
+                    stroke: Some(Stroke::from_bodymovin(stroke, frame_rate, size_scale[0])?),
+                    ..Style::default()
+                },
+            }),
+            bodymovin::shapes::AnyShape::GradientStroke(gradient_stroke) => Ok(Self {
+                geometry: Geometry::Null,
+                style: Style {
+                    stroke: Some(Stroke::from_bodymovin_with_gradient(
+                        gradient_stroke,
+                        frame_rate,
+                    )?),
+                    ..Style::default()
+                },
+            }),
+            bodymovin::shapes::AnyShape::Merge(_merge) => {
+                log::warn!("merges aren't implemented yet; ignoring");
+                Ok(Self {
+                    geometry: Geometry::Null,
+                    style: Style::default(),
+                })
+            }
+            bodymovin::shapes::AnyShape::Trim(_trim) => {
+                log::warn!("trims aren't implemented yet; ignoring");
+                Ok(Self {
+                    geometry: Geometry::Null,
+                    style: Style::default(),
+                })
+            }
+            bodymovin::shapes::AnyShape::RoundedCorners(_rounded_corners) => {
+                log::warn!("rounded corners aren't implemented yet; ignoring");
+                Ok(Self {
+                    geometry: Geometry::Null,
+                    style: Style::default(),
+                })
+            }
+            bodymovin::shapes::AnyShape::Transform(transform) => Ok(Self {
+                geometry: Geometry::Null,
+                style: Style {
+                    transform: Some(Transform::from_bodymovin_shape(
+                        transform,
+                        frame_rate,
+                        position_scale,
+                    )?),
+                    ..Style::default()
+                },
+            }),
+
+            bodymovin::shapes::AnyShape::Group(group) => {
+                Ok(Self::from_group(group, frame_rate, position_scale, size_scale)?.unwrap())
+            }
+
+            bodymovin::shapes::AnyShape::Repeater(_) => Err(Error::NotAGroup)?,
+        }
+    }
+
     pub(crate) fn from_bodymovin(
         shape: bodymovin::shapes::AnyShape,
         frame_rate: f64,
@@ -179,7 +301,76 @@ impl Shape {
             bodymovin::shapes::AnyShape::Group(group) => {
                 Self::from_group(group, frame_rate, position_scale, size_scale)
             }
+
+            bodymovin::shapes::AnyShape::Shape(shape) => {
+                println!("Shape!");
+                Ok(Some(Self::from_anyshape(
+                    bodymovin::shapes::AnyShape::Shape(shape),
+                    frame_rate,
+                    position_scale,
+                    size_scale,
+                )?))
+            }
+            bodymovin::shapes::AnyShape::Rect(rect) => {
+                println!("Rect!");
+                Ok(Some(Self::from_anyshape(
+                    bodymovin::shapes::AnyShape::Rect(rect),
+                    frame_rate,
+                    position_scale,
+                    size_scale,
+                )?))
+            }
+            bodymovin::shapes::AnyShape::Ellipse(ellipse) => {
+                println!("Ellipse!");
+                Err(Error::NotAGroup)
+            }
+            bodymovin::shapes::AnyShape::Star(star) => {
+                println!("Star!");
+                Err(Error::NotAGroup)
+            }
+            bodymovin::shapes::AnyShape::Fill(fill) => {
+                println!("Fill!");
+                Err(Error::NotAGroup)
+            }
+            bodymovin::shapes::AnyShape::GradientFill(gradient_fill) => {
+                println!("GradientFill!");
+                Err(Error::NotAGroup)
+            }
+            bodymovin::shapes::AnyShape::GradientStroke(gradient_stroke) => {
+                println!("GradientStroke!");
+                Err(Error::NotAGroup)
+            }
+            bodymovin::shapes::AnyShape::Stroke(stroke) => {
+                println!("Stroke!");
+                Err(Error::NotAGroup)
+            }
+            bodymovin::shapes::AnyShape::Merge(merge) => {
+                println!("Merge!");
+                Err(Error::NotAGroup)
+            }
+            bodymovin::shapes::AnyShape::Trim(trim) => {
+                println!("Trim!");
+                Ok(Some(Self::from_anyshape(
+                    bodymovin::shapes::AnyShape::Trim(trim),
+                    frame_rate,
+                    position_scale,
+                    size_scale,
+                )?))
+            }
+            bodymovin::shapes::AnyShape::Repeater(repeater) => {
+                println!("Repeater!");
+                Err(Error::NotAGroup)
+            }
+            bodymovin::shapes::AnyShape::RoundedCorners(rounded_corners) => {
+                println!("RoundedCorners!");
+                Err(Error::NotAGroup)
+            }
+            bodymovin::shapes::AnyShape::Transform(transform) => {
+                println!("Transform!");
+                Err(Error::NotAGroup)
+            }
             // TODO: will this ever happen?
+            // Note: Yes, it will
             _ => Err(Error::NotAGroup),
         }
     }

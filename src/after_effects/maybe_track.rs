@@ -3,7 +3,7 @@ use crate::{
     ease::Ease, interval::Interval, interval_track::IntervalTrack, spline::bezier_ease::BezierEase,
     Animatable, Animation,
 };
-use bodymovin::properties::{self, DoubleKeyframe, ScalarKeyframe, Value};
+use bodymovin::properties::{self, ScalarKeyframe, Value};
 use std::time::Duration;
 
 impl From<bodymovin::properties::Bezier2d> for BezierEase {
@@ -13,6 +13,17 @@ impl From<bodymovin::properties::Bezier2d> for BezierEase {
             oy: bezier.out_value.y,
             ix: bezier.in_value.x,
             iy: bezier.in_value.y,
+        }
+    }
+}
+
+impl From<bodymovin::properties::Bezier3d> for BezierEase {
+    fn from(bezier: bodymovin::properties::Bezier3d) -> Self {
+        Self {
+            ox: bezier.out_value.x[0],
+            oy: bezier.out_value.y[0],
+            ix: bezier.in_value.x[0],
+            iy: bezier.in_value.y[0],
         }
     }
 }
@@ -72,10 +83,10 @@ impl<V: FromValue> Interval<V> {
             end: Duration::from_secs_f64(frame_b.start_time / frame_rate),
             from: from_value,
             to: to_value,
-            ease: frame_a
-                .bezier
-                .clone()
-                .map(|ease| Ease::Bezier(Into::into(ease))),
+            ease: frame_a.bezier.clone().map(|ease| match ease {
+                bodymovin::properties::BezierEase::_2D(ease) => Ease::Bezier(Into::into(ease)),
+                bodymovin::properties::BezierEase::_3D(ease) => Ease::Bezier(Into::into(ease)),
+            }),
             path: None,
             reticulated_spline: None,
         })
@@ -99,14 +110,14 @@ impl<V: FromMultiDimensional> Interval<V> {
             from_value
         };
         Ok(Interval {
-            start: Duration::from_secs_f64(from.start_time / frame_rate),
-            end: Duration::from_secs_f64(to.start_time / frame_rate),
+            start: Duration::from_secs_f64(from.start_time.abs() / frame_rate),
+            end: Duration::from_secs_f64(to.start_time.abs() / frame_rate),
             from: from_value,
             to: to_value,
-            ease: from
-                .bezier
-                .clone()
-                .map(|ease| Ease::Bezier(Into::into(ease))),
+            ease: from.bezier.clone().map(|ease| match ease {
+                bodymovin::properties::BezierEase::_2D(ease) => Ease::Bezier(Into::into(ease)),
+                bodymovin::properties::BezierEase::_3D(ease) => Ease::Bezier(Into::into(ease)),
+            }),
             path: None,
             reticulated_spline: None,
         })
