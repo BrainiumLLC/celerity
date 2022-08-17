@@ -157,7 +157,7 @@ fn in_exponential(t: f64, n: i32) -> f64 {
 }
 
 fn out_exponential(t: f64, n: i32) -> f64 {
-    1.0 - in_exponential(t, n)
+    1.0 - in_exponential(1.0 - t, n)
 }
 
 fn in_out_exponential(t: f64, n: i32) -> f64 {
