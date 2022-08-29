@@ -31,6 +31,42 @@ impl<V: Animatable> IntervalTrack<V> {
         Self::new().with_intervals(intervals)
     }
 
+    pub fn from_values(duration: Duration, values: Vec<V>, track_ease: Option<Ease>) -> Self {
+        match values.len() {
+            0 => IntervalTrack::new(),
+            1 => IntervalTrack::from_interval(Interval::hold(values[0], Duration::ZERO)),
+            2 => IntervalTrack::from_interval(Interval::eased(
+                Frame::new(Duration::ZERO, values[0]),
+                Frame::new(duration, values[1]),
+                track_ease,
+            )),
+            _ => {
+                let lengths = values
+                    .windows(2)
+                    .map(|window| window[0].distance_to(window[1]))
+                    .collect();
+
+                let durations =
+                    constant_velocity_durations(&accumulate_lengths(&lengths), duration);
+
+                IntervalTrack::from_intervals(values.windows(2).zip(durations.windows(2)).map(
+                    |(value_window, duration_window)| {
+                        Interval::new(
+                            duration_window[0],
+                            duration_window[1],
+                            value_window[0],
+                            value_window[1],
+                            None,
+                            None,
+                            None,
+                        )
+                    },
+                ))
+                .with_track_ease(track_ease)
+            }
+        }
+    }
+
     pub fn path(
         duration: Duration,
         values: Vec<V>,
@@ -52,7 +88,9 @@ impl<V: Animatable> IntervalTrack<V> {
                 // Calculate BezierPath and SplineMap for each interval
                 let (paths, maps) = bookended_values_to_bezier_structs(&bookended_values, rectify);
                 // Calculate durations for each interval threshold
-                let durations = constant_velocity_durations(&accumulate_lengths(&maps), duration);
+                let lengths = maps.iter().map(|map| map.length).collect::<Vec<_>>();
+                let durations =
+                    constant_velocity_durations(&accumulate_lengths(&lengths), duration);
 
                 IntervalTrack::from_intervals(
                     bookended_values
@@ -141,6 +179,27 @@ impl<V: Animatable> IntervalTrack<V> {
         self.intervals
             .iter()
             .fold(0.0, |acc, interval| acc + interval.length())
+    }
+
+    // Returns the sampled value at elapsed, as well as the values for any elapsed keyframes
+    pub fn keyframe_sample(&self, elapsed: Duration) -> Vec<V> {
+        std::iter::once(self.intervals[0].from)
+            .chain(
+                self.intervals
+                    .iter()
+                    .filter(move |interval| {
+                        elapsed > interval.start
+                            && !interval.changes_after(elapsed - interval.start)
+                    })
+                    .into_iter()
+                    .map(|interval| interval.to),
+            )
+            .chain(std::iter::once(
+                self.current_interval(&elapsed)
+                    .map(|interval| interval.sample(elapsed))
+                    .expect("Animation has no current interval!"),
+            ))
+            .collect()
     }
 }
 
@@ -279,11 +338,11 @@ fn bookended_values_to_bezier_structs<V: Animatable>(
         .unzip()
 }
 
-fn accumulate_lengths(maps: &Vec<SplineMap>) -> Vec<f64> {
+fn accumulate_lengths(lengths: &Vec<f64>) -> Vec<f64> {
     let mut accumulated_lengths = vec![];
-    let total_length = maps.iter().fold(0.0, |len, map| {
-        accumulated_lengths.push(len);
-        len + map.length
+    let total_length = lengths.iter().fold(0.0, |total, length| {
+        accumulated_lengths.push(total);
+        total + length
     });
     accumulated_lengths.push(total_length);
 
